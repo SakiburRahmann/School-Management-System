@@ -9,4 +9,6 @@ if ($result) {
 } else {
     echo "Error: " . $conn->error;
 }
+
+echo "Test page is working!";
 ?>

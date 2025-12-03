@@ -1,82 +1,97 @@
 <?php
 session_start();
-include('../config.php');
+require_once __DIR__ . '/../core/models/ClassModel.php';
 
 // Only admin access
-if ($_SESSION['role'] !== 'Admin') {
-    die("Access Denied!");
+if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'Admin') {
+    header("Location: ../login.php");
+    exit;
 }
 
+$classModel = new ClassModel();
 $message = "";
+$error = "";
 
 // Add Class
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['add_class'])) {
     $class_name = trim($_POST['class_name']);
-    if ($class_name != "") {
-        $stmt = $conn->prepare("INSERT INTO classes (class_name) VALUES (?)");
-        $stmt->bind_param("s", $class_name);
-        if ($stmt->execute()) {
+    $section = trim($_POST['section']);
+
+    if ($class_name != "" && $section != "") {
+        if ($classModel->insert(['class_name' => $class_name, 'section' => $section])) {
             $message = "Class added successfully!";
         } else {
-            $message = "Error: " . $conn->error;
+            $error = "Error adding class.";
         }
+    } else {
+        $error = "Please fill in all fields.";
     }
 }
 
 // Fetch all classes
-$classes = $conn->query("SELECT * FROM classes ORDER BY class_id DESC");
+$classes = $classModel->findAll();
 ?>
 
 <!DOCTYPE html>
 <html>
+
 <head>
     <title>Manage Classes</title>
     <link rel="stylesheet" href="../style/style.css">
 </head>
+
 <body>
 
-<?php include('../includes/header.php'); ?>
+    <?php include('../includes/header.php'); ?>
 
-<main>
-    <h2>Manage Classes</h2>
+    <main>
+        <h2>Manage Classes</h2>
 
-    <?php if ($message != "") echo "<p style='color:green;'>$message</p>"; ?>
+        <?php if ($message != "") echo "<p class='success'>$message</p>"; ?>
+        <?php if ($error != "") echo "<p class='error'>$error</p>"; ?>
 
-    <!-- Add Class Form -->
-    <form method="POST">
-        <label>Class Name:</label><br>
-        <input type="text" name="class_name" required>
-        <button type="submit" name="add_class">Add Class</button>
-    </form>
+        <!-- Add Class Form -->
+        <form method="POST">
+            <label>Class Name:</label><br>
+            <input type="text" name="class_name" required placeholder="e.g. Class 10"><br><br>
+            
+            <label>Section:</label><br>
+            <input type="text" name="section" required placeholder="e.g. A"><br><br>
 
-    <hr>
+            <button type="submit" name="add_class">Add Class</button>
+        </form>
 
-    <!-- Class List -->
-    <h3>All Classes</h3>
-    <table border="1" cellpadding="10" style="width:100%; background:white;">
-        <tr>
-            <th>ID</th>
-            <th>Class Name</th>
-            <th>Actions</th>
-        </tr>
-        <?php while($row = $classes->fetch_assoc()) { ?>
+        <hr>
+
+        <!-- Class List -->
+        <h3>All Classes</h3>
+        <table border="1" cellpadding="10" style="width:100%; background:white;">
             <tr>
-                <td><?= $row['class_id']; ?></td>
-                <td><?= $row['class_name']; ?></td>
-                <td>
-                    <a href="edit_class.php?id=<?= $row['class_id']; ?>">Edit</a> |
-                    <a href="delete_class.php?id=<?= $row['class_id']; ?>" 
-                       onclick="return confirm('Are you sure you want to delete this class?');">
-                       Delete
-                    </a>
-                </td>
+                <th>ID</th>
+                <th>Class Name</th>
+                <th>Section</th>
+                <th>Actions</th>
             </tr>
-        <?php } ?>
-    </table>
+            <?php foreach ($classes as $row) { ?>
+                <tr>
+                    <td><?= $row['class_id']; ?></td>
+                    <td><?= $row['class_name']; ?></td>
+                    <td><?= $row['section']; ?></td>
+                    <td>
+                        <a href="edit_class.php?id=<?= $row['class_id']; ?>">Edit</a> |
+                        <a href="delete_class.php?id=<?= $row['class_id']; ?>"
+                            onclick="return confirm('Are you sure you want to delete this class?');">
+                            Delete
+                        </a>
+                    </td>
+                </tr>
+            <?php } ?>
+        </table>
 
-</main>
+    </main>
 
-<?php include('../includes/footer.php'); ?>
+    <?php include('../includes/footer.php'); ?>
 
 </body>
+
 </html>

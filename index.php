@@ -1,23 +1,7 @@
 <?php
-$title = "Welcome to SchoolMS";
-?>
+// Public-facing home page handled via WebsiteController
 
-<!DOCTYPE html>
-<html>
-<head>
-    <title><?php echo $title; ?></title>
-    <link rel="stylesheet" href="style/style.css">
-</head>
-<body>
+require_once __DIR__ . '/core/controllers/WebsiteController.php';
 
-<?php include('includes/header.php'); ?>
-
-<main>
-    <h2><?php echo $title; ?></h2>
-    <p>This is the homepage of your School Management System. Your project is ready to expand!</p>
-</main>
-
-<?php include('includes/footer.php'); ?>
-
-</body>
-</html>
+$controller = new WebsiteController();
+$controller->home();

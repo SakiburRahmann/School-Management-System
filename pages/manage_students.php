@@ -1,52 +1,59 @@
 <?php
 session_start();
-include('../config.php');
+require_once __DIR__ . '/../core/models/Student.php';
+require_once __DIR__ . '/../core/models/ClassModel.php';
 
 // Only admin can access
-if ($_SESSION['role'] !== 'Admin') {
-    die("Access Denied!");
+if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'Admin') {
+    header("Location: ../login.php");
+    exit;
 }
 
-// Fetch classes
-$classes = $conn->query("SELECT * FROM classes");
+$studentModel = new Student();
+$classModel = new ClassModel();
 
-// Fetch sections
-$sections = $conn->query("SELECT sections.*, classes.class_name 
-                          FROM sections 
-                          JOIN classes ON sections.class_id = classes.class_id");
+$message = "";
+$error = "";
 
 // Add New Student
-$message = "";
-
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $name = $_POST['name'];
+    $first_name = $_POST['first_name'];
+    $last_name = $_POST['last_name'];
+    $email = $_POST['email'];
+    $dob = $_POST['dob'];
+    $gender = $_POST['gender'];
+    $address = $_POST['address'];
     $class_id = $_POST['class_id'];
-    $section_id = $_POST['section_id'];
-    $roll_number = $_POST['roll_number'];
-    $guardian_name = $_POST['guardian_name'];
-    $guardian_phone = $_POST['guardian_phone'];
-    $contact = $_POST['contact_details'];
+    $admission_date = $_POST['admission_date'];
 
-    $sql = "INSERT INTO students 
-            (name, class_id, section_id, roll_number, guardian_name, guardian_phone, contact_details)
-            VALUES (?, ?, ?, ?, ?, ?, ?)";
+    $data = [
+        'first_name' => $first_name,
+        'last_name' => $last_name,
+        'email' => $email,
+        'dob' => $dob,
+        'gender' => $gender,
+        'address' => $address,
+        'class_id' => $class_id,
+        'admission_date' => $admission_date
+    ];
 
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("siiisss", $name, $class_id, $section_id, $roll_number, $guardian_name, $guardian_phone, $contact);
-
-    if ($stmt->execute()) {
+    if ($studentModel->insert($data)) {
         $message = "Student added successfully!";
     } else {
-        $message = "Error: " . $conn->error;
+        $error = "Error adding student.";
     }
 }
 
-// Fetch all students
-$students = $conn->query("SELECT students.*, classes.class_name, sections.section_name
-    FROM students
-    LEFT JOIN classes ON students.class_id = classes.class_id
-    LEFT JOIN sections ON students.section_id = sections.section_id
-    ORDER BY students.student_id DESC");
+// Fetch all classes for dropdown
+$classes = $classModel->findAll();
+
+// Fetch all students with class info
+$students = $studentModel->query("
+    SELECT students.*, classes.class_name, classes.section 
+    FROM students 
+    LEFT JOIN classes ON students.class_id = classes.class_id 
+    ORDER BY students.student_id DESC
+");
 ?>
 
 <!DOCTYPE html>
@@ -64,45 +71,47 @@ $students = $conn->query("SELECT students.*, classes.class_name, sections.sectio
     <main>
         <h2>Manage Students</h2>
 
-        <?php if ($message != "")
-            echo "<p style='color:green;'>$message</p>"; ?>
+        <?php if ($message != "") echo "<p class='success'>$message</p>"; ?>
+        <?php if ($error != "") echo "<p class='error'>$error</p>"; ?>
 
         <!-- ADD STUDENT FORM -->
         <h3>Add New Student</h3>
 
         <form method="POST" action="">
-            <label>Name:</label><br>
-            <input type="text" name="name" required><br><br>
+            <label>First Name:</label><br>
+            <input type="text" name="first_name" required><br><br>
+
+            <label>Last Name:</label><br>
+            <input type="text" name="last_name" required><br><br>
+
+            <label>Email:</label><br>
+            <input type="email" name="email"><br><br>
+
+            <label>Date of Birth:</label><br>
+            <input type="date" name="dob"><br><br>
+
+            <label>Gender:</label><br>
+            <select name="gender">
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Other">Other</option>
+            </select><br><br>
+
+            <label>Address:</label><br>
+            <textarea name="address"></textarea><br><br>
 
             <label>Class:</label><br>
             <select name="class_id" required>
                 <option value="">Select Class</option>
-                <?php while ($c = $classes->fetch_assoc()) { ?>
-                    <option value="<?= $c['class_id']; ?>"><?= $c['class_name']; ?></option>
-                <?php } ?>
-            </select><br><br>
-
-            <label>Section:</label><br>
-            <select name="section_id" required>
-                <option value="">Select Section</option>
-                <?php while ($s = $sections->fetch_assoc()) { ?>
-                    <option value="<?= $s['section_id']; ?>">
-                        <?= $s['class_name'] . " - " . $s['section_name']; ?>
+                <?php foreach ($classes as $c) { ?>
+                    <option value="<?= $c['class_id']; ?>">
+                        <?= $c['class_name'] . " (" . $c['section'] . ")"; ?>
                     </option>
                 <?php } ?>
             </select><br><br>
 
-            <label>Roll Number:</label><br>
-            <input type="number" name="roll_number" required><br><br>
-
-            <label>Guardian Name:</label><br>
-            <input type="text" name="guardian_name"><br><br>
-
-            <label>Guardian Phone:</label><br>
-            <input type="text" name="guardian_phone"><br><br>
-
-            <label>Contact Details:</label><br>
-            <textarea name="contact_details"></textarea><br><br>
+            <label>Admission Date:</label><br>
+            <input type="date" name="admission_date" value="<?= date('Y-m-d'); ?>"><br><br>
 
             <button type="submit">Add Student</button>
         </form>
@@ -116,23 +125,21 @@ $students = $conn->query("SELECT students.*, classes.class_name, sections.sectio
             <tr>
                 <th>ID</th>
                 <th>Name</th>
+                <th>Email</th>
                 <th>Class</th>
-                <th>Section</th>
-                <th>Roll</th>
-                <th>Guardian</th>
-                <th>Phone</th>
+                <th>DOB</th>
+                <th>Gender</th>
                 <th>Actions</th>
             </tr>
 
             <?php while ($row = $students->fetch_assoc()) { ?>
                 <tr>
                     <td><?= $row['student_id']; ?></td>
-                    <td><?= $row['name']; ?></td>
-                    <td><?= $row['class_name']; ?></td>
-                    <td><?= $row['section_name']; ?></td>
-                    <td><?= $row['roll_number']; ?></td>
-                    <td><?= $row['guardian_name']; ?></td>
-                    <td><?= $row['guardian_phone']; ?></td>
+                    <td><?= $row['first_name'] . " " . $row['last_name']; ?></td>
+                    <td><?= $row['email']; ?></td>
+                    <td><?= $row['class_name'] . " (" . $row['section'] . ")"; ?></td>
+                    <td><?= $row['dob']; ?></td>
+                    <td><?= $row['gender']; ?></td>
 
                     <td>
                         <a href="edit_student.php?id=<?= $row['student_id']; ?>">Edit</a> |

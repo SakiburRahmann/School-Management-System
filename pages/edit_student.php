@@ -1,10 +1,12 @@
 <?php
 session_start();
-include('../config.php');
+require_once __DIR__ . '/../core/models/Student.php';
+require_once __DIR__ . '/../core/models/ClassModel.php';
 
 // Only admin access
-if ($_SESSION['role'] !== 'Admin') {
-    die("Access Denied!");
+if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'Admin') {
+    header("Location: ../login.php");
+    exit;
 }
 
 // GET student ID
@@ -13,56 +15,51 @@ if (!isset($_GET['id'])) {
 }
 
 $student_id = $_GET['id'];
+$studentModel = new Student();
+$classModel = new ClassModel();
 
-// Fetch student info
-$sql = "SELECT * FROM students WHERE student_id = ?";
-$stmt = $conn->prepare($sql);
-$stmt->bind_param("i", $student_id);
-$stmt->execute();
-$result = $stmt->get_result();
+$student = $studentModel->find($student_id);
 
-if ($result->num_rows == 0) {
+if (!$student) {
     die("Student not found!");
 }
 
-$student = $result->fetch_assoc();
-
-// Fetch classes
-$classes = $conn->query("SELECT * FROM classes");
-
-// Fetch sections
-$sections = $conn->query("SELECT * FROM sections");
-
 $message = "";
+$error = "";
 
 // Update student info
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-
-    $name = $_POST['name'];
+    $first_name = $_POST['first_name'];
+    $last_name = $_POST['last_name'];
+    $email = $_POST['email'];
+    $dob = $_POST['dob'];
+    $gender = $_POST['gender'];
+    $address = $_POST['address'];
     $class_id = $_POST['class_id'];
-    $section_id = $_POST['section_id'];
-    $roll = $_POST['roll_number'];
-    $gname = $_POST['guardian_name'];
-    $gphone = $_POST['guardian_phone'];
-    $contact = $_POST['contact_details'];
+    $admission_date = $_POST['admission_date'];
 
-    $update = "UPDATE students 
-               SET name=?, class_id=?, section_id=?, roll_number=?, 
-                   guardian_name=?, guardian_phone=?, contact_details=?
-               WHERE student_id=?";
+    $data = [
+        'first_name' => $first_name,
+        'last_name' => $last_name,
+        'email' => $email,
+        'dob' => $dob,
+        'gender' => $gender,
+        'address' => $address,
+        'class_id' => $class_id,
+        'admission_date' => $admission_date
+    ];
 
-    $stmt = $conn->prepare($update);
-    $stmt->bind_param(
-        "siiisssi",
-        $name, $class_id, $section_id, $roll, $gname, $gphone, $contact, $student_id
-    );
-
-    if ($stmt->execute()) {
+    if ($studentModel->update($student_id, $data)) {
         $message = "Student updated successfully!";
+        // Refresh data
+        $student = $studentModel->find($student_id);
     } else {
-        $message = "Error updating student: " . $conn->error;
+        $error = "Error updating student.";
     }
 }
+
+// Fetch classes
+$classes = $classModel->findAll();
 ?>
 
 <!DOCTYPE html>
@@ -78,44 +75,45 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <main>
     <h2>Edit Student</h2>
 
-    <?php if ($message != "") echo "<p style='color:green;'>$message</p>"; ?>
+    <?php if ($message != "") echo "<p class='success'>$message</p>"; ?>
+    <?php if ($error != "") echo "<p class='error'>$error</p>"; ?>
 
     <form method="POST">
 
-        <label>Name:</label><br>
-        <input type="text" name="name" value="<?= $student['name']; ?>" required><br><br>
+        <label>First Name:</label><br>
+        <input type="text" name="first_name" value="<?= $student['first_name']; ?>" required><br><br>
+
+        <label>Last Name:</label><br>
+        <input type="text" name="last_name" value="<?= $student['last_name']; ?>" required><br><br>
+
+        <label>Email:</label><br>
+        <input type="email" name="email" value="<?= $student['email']; ?>"><br><br>
+
+        <label>Date of Birth:</label><br>
+        <input type="date" name="dob" value="<?= $student['dob']; ?>"><br><br>
+
+        <label>Gender:</label><br>
+        <select name="gender">
+            <option value="Male" <?= $student['gender'] == 'Male' ? 'selected' : ''; ?>>Male</option>
+            <option value="Female" <?= $student['gender'] == 'Female' ? 'selected' : ''; ?>>Female</option>
+            <option value="Other" <?= $student['gender'] == 'Other' ? 'selected' : ''; ?>>Other</option>
+        </select><br><br>
+
+        <label>Address:</label><br>
+        <textarea name="address"><?= $student['address']; ?></textarea><br><br>
 
         <label>Class:</label><br>
         <select name="class_id" required>
-            <?php while ($c = $classes->fetch_assoc()) { ?>
+            <?php foreach ($classes as $c) { ?>
                 <option value="<?= $c['class_id']; ?>"
                     <?= $c['class_id'] == $student['class_id'] ? 'selected' : '' ?>>
-                    <?= $c['class_name']; ?>
+                    <?= $c['class_name'] . " (" . $c['section'] . ")"; ?>
                 </option>
             <?php } ?>
         </select><br><br>
 
-        <label>Section:</label><br>
-        <select name="section_id" required>
-            <?php while ($s = $sections->fetch_assoc()) { ?>
-                <option value="<?= $s['section_id']; ?>"
-                    <?= $s['section_id'] == $student['section_id'] ? 'selected' : '' ?>>
-                    <?= $s['section_name']; ?>
-                </option>
-            <?php } ?>
-        </select><br><br>
-
-        <label>Roll Number:</label><br>
-        <input type="number" name="roll_number" value="<?= $student['roll_number']; ?>" required><br><br>
-
-        <label>Guardian Name:</label><br>
-        <input type="text" name="guardian_name" value="<?= $student['guardian_name']; ?>"><br><br>
-
-        <label>Guardian Phone:</label><br>
-        <input type="text" name="guardian_phone" value="<?= $student['guardian_phone']; ?>"><br><br>
-
-        <label>Contact Details:</label><br>
-        <textarea name="contact_details"><?= $student['contact_details']; ?></textarea><br><br>
+        <label>Admission Date:</label><br>
+        <input type="date" name="admission_date" value="<?= $student['admission_date']; ?>"><br><br>
 
         <button type="submit">Update</button>
     </form>

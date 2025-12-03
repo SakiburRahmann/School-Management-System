@@ -1,36 +1,37 @@
 <?php
 session_start();
-include('../config.php');
+require_once __DIR__ . '/../core/models/ClassModel.php';
 
-if ($_SESSION['role'] !== 'Admin') {
-    die("Access Denied!");
+if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'Admin') {
+    header("Location: ../login.php");
+    exit;
 }
 
 if (!isset($_GET['id'])) die("Invalid request");
 
 $class_id = $_GET['id'];
+$classModel = new ClassModel();
 
-// Fetch class
-$stmt = $conn->prepare("SELECT * FROM classes WHERE class_id=?");
-$stmt->bind_param("i", $class_id);
-$stmt->execute();
-$result = $stmt->get_result();
-if ($result->num_rows == 0) die("Class not found");
-$class = $result->fetch_assoc();
+$class = $classModel->find($class_id);
+if (!$class) die("Class not found");
 
 $message = "";
+$error = "";
 
 // Update
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $class_name = trim($_POST['class_name']);
-    if ($class_name != "") {
-        $stmt = $conn->prepare("UPDATE classes SET class_name=? WHERE class_id=?");
-        $stmt->bind_param("si", $class_name, $class_id);
-        if ($stmt->execute()) {
+    $section = trim($_POST['section']);
+
+    if ($class_name != "" && $section != "") {
+        if ($classModel->update($class_id, ['class_name' => $class_name, 'section' => $section])) {
             $message = "Class updated successfully!";
+            $class = $classModel->find($class_id);
         } else {
-            $message = "Error: " . $conn->error;
+            $error = "Error updating class.";
         }
+    } else {
+        $error = "Please fill in all fields.";
     }
 }
 ?>
@@ -48,12 +49,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <main>
     <h2>Edit Class</h2>
 
-    <?php if($message != "") echo "<p style='color:green;'>$message</p>"; ?>
+    <?php if ($message != "") echo "<p class='success'>$message</p>"; ?>
+    <?php if ($error != "") echo "<p class='error'>$error</p>"; ?>
 
     <form method="POST">
         <label>Class Name:</label><br>
         <input type="text" name="class_name" value="<?= $class['class_name']; ?>" required>
         <br><br>
+        
+        <label>Section:</label><br>
+        <input type="text" name="section" value="<?= $class['section']; ?>" required>
+        <br><br>
+
         <button type="submit">Update Class</button>
     </form>
 
