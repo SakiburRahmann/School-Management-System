@@ -1,27 +1,61 @@
 <?php
+/**
+ * Admission Request Model
+ * Handles online admission applications
+ */
 
-require_once __DIR__ . '/../../core/Model.php';
-
-class AdmissionRequest extends Model
-{
-    public function create(array $data): bool
-    {
-        $sql = "INSERT INTO admission_requests 
-                (student_name, class_applied, guardian_name, guardian_phone, message) 
-                VALUES (?, ?, ?, ?, ?)";
-
-        $stmt = $this->db->prepare($sql);
-        $stmt->bind_param(
-            "sssss",
-            $data['student_name'],
-            $data['class_applied'],
-            $data['guardian_name'],
-            $data['guardian_phone'],
-            $data['message']
-        );
-
-        return $stmt->execute();
+class AdmissionRequest extends BaseModel {
+    protected $table = 'admission_requests';
+    protected $primaryKey = 'request_id';
+    
+    /**
+     * Get all admission requests
+     */
+    public function getAllRequests($status = null) {
+        $sql = "SELECT * FROM {$this->table}";
+        $params = [];
+        
+        if ($status) {
+            $sql .= " WHERE status = :status";
+            $params['status'] = $status;
+        }
+        
+        $sql .= " ORDER BY created_at DESC";
+        
+        return $this->query($sql, $params);
+    }
+    
+    /**
+     * Get pending requests
+     */
+    public function getPendingRequests() {
+        return $this->getAllRequests('Pending');
+    }
+    
+    /**
+     * Approve request
+     */
+    public function approve($requestId, $remarks = null) {
+        return $this->update($requestId, [
+            'status' => 'Approved',
+            'remarks' => $remarks
+        ]);
+    }
+    
+    /**
+     * Reject request
+     */
+    public function reject($requestId, $remarks = null) {
+        return $this->update($requestId, [
+            'status' => 'Rejected',
+            'remarks' => $remarks
+        ]);
+    }
+    
+    /**
+     * Get pending count
+     */
+    public function getPendingCount() {
+        return $this->count('status = :status', ['status' => 'Pending']);
     }
 }
-
-

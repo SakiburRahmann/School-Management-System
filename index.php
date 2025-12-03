@@ -1,7 +1,7 @@
 <?php
-// Public-facing home page handled via WebsiteController
+/**
+ * Main Index - Redirect to public website
+ */
 
-require_once __DIR__ . '/core/controllers/WebsiteController.php';
-
-$controller = new WebsiteController();
-$controller->home();
+header('Location: public/index.php');
+exit;

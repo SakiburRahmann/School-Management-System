@@ -1,16 +1,48 @@
 <?php
+/**
+ * Contact Message Model
+ * Handles contact form submissions
+ */
 
-require_once __DIR__ . '/../../core/Model.php';
-
-class ContactMessage extends Model
-{
-    public function create(array $data): bool
-    {
-        $sql = "INSERT INTO contact_messages (name, email, subject, message) VALUES (?, ?, ?, ?)";
-        $stmt = $this->db->prepare($sql);
-        $stmt->bind_param("ssss", $data['name'], $data['email'], $data['subject'], $data['message']);
-        return $stmt->execute();
+class ContactMessage extends BaseModel {
+    protected $table = 'contact_messages';
+    protected $primaryKey = 'message_id';
+    
+    /**
+     * Get all messages
+     */
+    public function getAllMessages($isRead = null) {
+        $sql = "SELECT * FROM {$this->table}";
+        $params = [];
+        
+        if ($isRead !== null) {
+            $sql .= " WHERE is_read = :is_read";
+            $params['is_read'] = $isRead;
+        }
+        
+        $sql .= " ORDER BY created_at DESC";
+        
+        return $this->query($sql, $params);
+    }
+    
+    /**
+     * Mark as read
+     */
+    public function markAsRead($messageId) {
+        return $this->update($messageId, ['is_read' => 1]);
+    }
+    
+    /**
+     * Mark as unread
+     */
+    public function markAsUnread($messageId) {
+        return $this->update($messageId, ['is_read' => 0]);
+    }
+    
+    /**
+     * Get unread count
+     */
+    public function getUnreadCount() {
+        return $this->count('is_read = 0');
     }
 }
-
-
