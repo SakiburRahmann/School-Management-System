@@ -1,19 +1,34 @@
 <?php
 /**
- * Admin - Add Student
- * Form to add new student
+ * Admin - Edit Student
+ * Form to edit student details
  */
 
 $studentModel = new Student();
 $classModel = new ClassModel();
-$userModel = new User();
+
+// Get student ID
+$studentId = $_GET['id'] ?? null;
+
+if (!$studentId) {
+    setFlash('danger', 'Invalid student ID.');
+    redirect(BASE_URL . '/admin/students/');
+}
+
+// Get student details
+$student = $studentModel->find($studentId);
+
+if (!$student) {
+    setFlash('danger', 'Student not found.');
+    redirect(BASE_URL . '/admin/students/');
+}
 
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Verify CSRF token
     if (!verifyCSRFToken($_POST['csrf_token'])) {
         setFlash('danger', 'Invalid request.');
-        redirect(BASE_URL . '/admin/students/add.php');
+        redirect(BASE_URL . '/admin/students/edit.php?id=' . $studentId);
     }
     
     $data = [
@@ -32,54 +47,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Validate required fields
     if (empty($data['name']) || empty($data['guardian_name'])) {
         setFlash('danger', 'Please fill in all required fields.');
-        redirect(BASE_URL . '/admin/students/add.php');
+        redirect(BASE_URL . '/admin/students/edit.php?id=' . $studentId);
     }
     
-    // Check if roll number exists
+    // Check if roll number exists (exclude current student)
     if ($data['roll_number'] && $data['class_id'] && $data['section_id']) {
-        if ($studentModel->rollNumberExists($data['class_id'], $data['section_id'], $data['roll_number'])) {
+        if ($studentModel->rollNumberExists($data['class_id'], $data['section_id'], $data['roll_number'], $studentId)) {
             setFlash('danger', 'Roll number already exists in this class and section.');
-            redirect(BASE_URL . '/admin/students/add.php');
+            redirect(BASE_URL . '/admin/students/edit.php?id=' . $studentId);
         }
     }
     
-    // Create student
-    $studentId = $studentModel->create($data);
-    
-    if ($studentId) {
-        // Create user account if requested
-        if (isset($_POST['create_account']) && $_POST['create_account'] == '1') {
-            $username = strtolower(str_replace(' ', '', $data['name'])) . $studentId;
-            $password = generatePassword();
-            
-            $userModel->createUser([
-                'username' => $username,
-                'password' => $password,
-                'role' => 'Student',
-                'related_id' => $studentId
-            ]);
-            
-            setFlash('success', "Student added successfully! Login: {$username} / {$password}");
-        } else {
-            setFlash('success', 'Student added successfully!');
-        }
-        
-        redirect(BASE_URL . '/admin/students/');
+    // Update student
+    if ($studentModel->update($studentId, $data)) {
+        setFlash('success', 'Student updated successfully!');
+        redirect(BASE_URL . '/admin/students/view.php?id=' . $studentId);
     } else {
-        setFlash('danger', 'Failed to add student.');
+        setFlash('danger', 'Failed to update student.');
     }
 }
 
 // Get all classes
 $classes = $classModel->getClassesWithSections();
 
-$pageTitle = 'Add New Student';
+$pageTitle = 'Edit Student';
 require_once __DIR__ . '/../../includes/admin_header.php';
 ?>
 
 <div class="card">
     <div class="card-header">
-        <h3>Add New Student</h3>
+        <h3>Edit Student</h3>
         <a href="<?php echo BASE_URL; ?>/admin/students/" class="btn btn-secondary">
             <i class="fas fa-arrow-left"></i> Back to List
         </a>
@@ -94,33 +91,36 @@ require_once __DIR__ . '/../../includes/admin_header.php';
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
                 <div class="form-group">
                     <label for="name">Full Name <span style="color: red;">*</span></label>
-                    <input type="text" id="name" name="name" class="form-control" required>
+                    <input type="text" id="name" name="name" class="form-control" 
+                           value="<?php echo htmlspecialchars($student['name']); ?>" required>
                 </div>
                 
                 <div class="form-group">
                     <label for="date_of_birth">Date of Birth</label>
-                    <input type="date" id="date_of_birth" name="date_of_birth" class="form-control">
+                    <input type="date" id="date_of_birth" name="date_of_birth" class="form-control"
+                           value="<?php echo $student['date_of_birth']; ?>">
                 </div>
                 
                 <div class="form-group">
                     <label for="gender">Gender</label>
                     <select id="gender" name="gender" class="form-control">
                         <option value="">Select Gender</option>
-                        <option value="Male">Male</option>
-                        <option value="Female">Female</option>
-                        <option value="Other">Other</option>
+                        <option value="Male" <?php echo $student['gender'] == 'Male' ? 'selected' : ''; ?>>Male</option>
+                        <option value="Female" <?php echo $student['gender'] == 'Female' ? 'selected' : ''; ?>>Female</option>
+                        <option value="Other" <?php echo $student['gender'] == 'Other' ? 'selected' : ''; ?>>Other</option>
                     </select>
                 </div>
                 
                 <div class="form-group">
                     <label for="contact_details">Email/Phone</label>
-                    <input type="text" id="contact_details" name="contact_details" class="form-control">
+                    <input type="text" id="contact_details" name="contact_details" class="form-control"
+                           value="<?php echo htmlspecialchars($student['contact_details']); ?>">
                 </div>
             </div>
             
             <div class="form-group">
                 <label for="address">Address</label>
-                <textarea id="address" name="address" class="form-control" rows="3"></textarea>
+                <textarea id="address" name="address" class="form-control" rows="3"><?php echo htmlspecialchars($student['address']); ?></textarea>
             </div>
             
             <h4 style="margin: 2rem 0 1rem; color: var(--primary);">Academic Information</h4>
@@ -131,7 +131,8 @@ require_once __DIR__ . '/../../includes/admin_header.php';
                     <select id="class_id" name="class_id" class="form-control" onchange="loadSections(this.value)">
                         <option value="">Select Class</option>
                         <?php foreach ($classes as $class): ?>
-                            <option value="<?php echo $class['class_id']; ?>">
+                            <option value="<?php echo $class['class_id']; ?>" 
+                                    <?php echo $student['class_id'] == $class['class_id'] ? 'selected' : ''; ?>>
                                 <?php echo htmlspecialchars($class['class_name']); ?>
                             </option>
                         <?php endforeach; ?>
@@ -142,12 +143,14 @@ require_once __DIR__ . '/../../includes/admin_header.php';
                     <label for="section_id">Section</label>
                     <select id="section_id" name="section_id" class="form-control">
                         <option value="">Select Section</option>
+                        <!-- Sections will be loaded via JS, but we need to pre-select -->
                     </select>
                 </div>
                 
                 <div class="form-group">
                     <label for="roll_number">Roll Number</label>
-                    <input type="number" id="roll_number" name="roll_number" class="form-control">
+                    <input type="number" id="roll_number" name="roll_number" class="form-control"
+                           value="<?php echo htmlspecialchars($student['roll_number']); ?>">
                 </div>
             </div>
             
@@ -156,30 +159,20 @@ require_once __DIR__ . '/../../includes/admin_header.php';
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
                 <div class="form-group">
                     <label for="guardian_name">Guardian Name <span style="color: red;">*</span></label>
-                    <input type="text" id="guardian_name" name="guardian_name" class="form-control" required>
+                    <input type="text" id="guardian_name" name="guardian_name" class="form-control" 
+                           value="<?php echo htmlspecialchars($student['guardian_name']); ?>" required>
                 </div>
                 
                 <div class="form-group">
                     <label for="guardian_phone">Guardian Phone</label>
-                    <input type="text" id="guardian_phone" name="guardian_phone" class="form-control">
+                    <input type="text" id="guardian_phone" name="guardian_phone" class="form-control"
+                           value="<?php echo htmlspecialchars($student['guardian_phone']); ?>">
                 </div>
-            </div>
-            
-            <h4 style="margin: 2rem 0 1rem; color: var(--primary);">User Account</h4>
-            
-            <div class="form-group">
-                <label class="checkbox-label">
-                    <input type="checkbox" name="create_account" value="1">
-                    <span>Create user account for student portal access</span>
-                </label>
-                <small style="display: block; margin-top: 0.5rem; color: #666;">
-                    If checked, a username and password will be automatically generated.
-                </small>
             </div>
             
             <div style="margin-top: 2rem; display: flex; gap: 1rem;">
                 <button type="submit" class="btn btn-primary">
-                    <i class="fas fa-save"></i> Add Student
+                    <i class="fas fa-save"></i> Update Student
                 </button>
                 <a href="<?php echo BASE_URL; ?>/admin/students/" class="btn btn-secondary">
                     Cancel
@@ -191,7 +184,7 @@ require_once __DIR__ . '/../../includes/admin_header.php';
 
 <script>
 // Load sections when class is selected
-function loadSections(classId) {
+function loadSections(classId, selectedSectionId = null) {
     const sectionSelect = document.getElementById('section_id');
     sectionSelect.innerHTML = '<option value="">Select Section</option>';
     
@@ -205,10 +198,22 @@ function loadSections(classId) {
                 const option = document.createElement('option');
                 option.value = section.section_id;
                 option.textContent = section.section_name;
+                if (selectedSectionId && section.section_id == selectedSectionId) {
+                    option.selected = true;
+                }
                 sectionSelect.appendChild(option);
             });
         });
 }
+
+// Initial load
+document.addEventListener('DOMContentLoaded', function() {
+    const classId = '<?php echo $student['class_id']; ?>';
+    const sectionId = '<?php echo $student['section_id']; ?>';
+    if (classId) {
+        loadSections(classId, sectionId);
+    }
+});
 </script>
 
 <?php require_once __DIR__ . '/../../includes/admin_footer.php'; ?>

@@ -66,4 +66,10 @@ class Gallery extends BaseModel {
             'uploaded_by' => $uploadedBy
         ]);
     }
+    /**
+     * Get all gallery images
+     */
+    public function getAll() {
+        return $this->getGalleryImages();
+    }
 }

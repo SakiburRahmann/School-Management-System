@@ -65,14 +65,20 @@ class Student extends BaseModel {
                 FROM {$this->table} s
                 LEFT JOIN classes c ON s.class_id = c.class_id
                 LEFT JOIN sections sec ON s.section_id = sec.section_id
-                WHERE s.name LIKE :keyword 
-                OR s.roll_number LIKE :keyword
-                OR s.guardian_name LIKE :keyword
-                OR s.guardian_phone LIKE :keyword
+                WHERE s.name LIKE :keyword1 
+                OR s.roll_number LIKE :keyword2
+                OR s.guardian_name LIKE :keyword3
+                OR s.guardian_phone LIKE :keyword4
                 ORDER BY s.name";
         
         $stmt = $this->db->prepare($sql);
-        $stmt->execute(['keyword' => "%{$keyword}%"]);
+        $searchTerm = "%{$keyword}%";
+        $stmt->execute([
+            'keyword1' => $searchTerm,
+            'keyword2' => $searchTerm,
+            'keyword3' => $searchTerm,
+            'keyword4' => $searchTerm
+        ]);
         return $stmt->fetchAll();
     }
     
