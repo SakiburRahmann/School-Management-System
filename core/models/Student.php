@@ -150,6 +150,26 @@ class Student extends BaseModel {
     }
     
     /**
+     * Check if student custom ID exists
+     */
+    public function studentIdExists($studentId, $excludeStudentId = null) {
+        $sql = "SELECT COUNT(*) as total FROM {$this->table} 
+                WHERE student_id_custom = :student_id";
+        
+        $params = ['student_id' => $studentId];
+        
+        if ($excludeStudentId) {
+            $sql .= " AND student_id != :exclude_id";
+            $params['exclude_id'] = $excludeStudentId;
+        }
+        
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+        $result = $stmt->fetch();
+        return $result['total'] > 0;
+    }
+    
+    /**
      * Get total students count
      */
     public function getTotalCount() {

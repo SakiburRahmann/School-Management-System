@@ -112,7 +112,13 @@ if (!$student) {
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
                     <div class="info-group">
                         <label>Student ID</label>
-                        <p><?php echo $student['student_id']; ?></p>
+                        <p>
+                            <?php if (!empty($student['student_id_custom'])): ?>
+                                <span class="badge badge-primary" style="font-size: 0.9rem;"><?php echo htmlspecialchars($student['student_id_custom']); ?></span>
+                            <?php else: ?>
+                                <span class="text-muted">Not assigned</span>
+                            <?php endif; ?>
+                        </p>
                     </div>
                     
                     <div class="info-group">

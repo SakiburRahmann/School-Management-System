@@ -80,16 +80,42 @@ class Teacher extends BaseModel {
                 COUNT(DISTINCT sub.subject_id) as subject_count
                 FROM {$this->table} t
                 LEFT JOIN subjects sub ON t.teacher_id = sub.teacher_id
-                WHERE t.name LIKE :keyword 
-                OR t.subject_speciality LIKE :keyword
-                OR t.email LIKE :keyword
-                OR t.phone LIKE :keyword
+                WHERE t.name LIKE :keyword1 
+                OR t.subject_speciality LIKE :keyword2
+                OR t.email LIKE :keyword3
+                OR t.phone LIKE :keyword4
                 GROUP BY t.teacher_id
                 ORDER BY t.name";
         
         $stmt = $this->db->prepare($sql);
-        $stmt->execute(['keyword' => "%{$keyword}%"]);
+        $searchTerm = "%{$keyword}%";
+        $stmt->execute([
+            'keyword1' => $searchTerm,
+            'keyword2' => $searchTerm,
+            'keyword3' => $searchTerm,
+            'keyword4' => $searchTerm
+        ]);
         return $stmt->fetchAll();
+    }
+    
+    /**
+     * Check if teacher custom ID exists
+     */
+    public function teacherIdExists($teacherId, $excludeTeacherId = null) {
+        $sql = "SELECT COUNT(*) as total FROM {$this->table} 
+                WHERE teacher_id_custom = :teacher_id";
+        
+        $params = ['teacher_id' => $teacherId];
+        
+        if ($excludeTeacherId) {
+            $sql .= " AND teacher_id != :exclude_id";
+            $params['exclude_id'] = $excludeTeacherId;
+        }
+        
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+        $result = $stmt->fetch();
+        return $result['total'] > 0;
     }
     
     /**

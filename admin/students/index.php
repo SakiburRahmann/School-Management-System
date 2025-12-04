@@ -69,6 +69,7 @@ $classes = $classModel->findAll('class_name');
             <table>
                 <thead>
                     <tr>
+                        <th>Student ID</th>
                         <th>Roll No.</th>
                         <th>Name</th>
                         <th>Class</th>
@@ -82,6 +83,13 @@ $classes = $classModel->findAll('class_name');
                     <?php if (!empty($students)): ?>
                         <?php foreach ($students as $student): ?>
                             <tr>
+                                <td>
+                                    <?php if (!empty($student['student_id_custom'])): ?>
+                                        <span class="badge badge-primary"><?php echo htmlspecialchars($student['student_id_custom']); ?></span>
+                                    <?php else: ?>
+                                        <span class="text-muted">-</span>
+                                    <?php endif; ?>
+                                </td>
                                 <td><?php echo htmlspecialchars($student['roll_number'] ?? 'N/A'); ?></td>
                                 <td>
                                     <strong><?php echo htmlspecialchars($student['name']); ?></strong>

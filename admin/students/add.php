@@ -20,6 +20,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     $data = [
         'name' => sanitize($_POST['name']),
+        'student_id_custom' => sanitize($_POST['student_id_custom']),
         'class_id' => $_POST['class_id'] ?: null,
         'section_id' => $_POST['section_id'] ?: null,
         'roll_number' => $_POST['roll_number'] ?: null,
@@ -34,6 +35,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Validate required fields
     if (empty($data['name']) || empty($data['guardian_name'])) {
         setFlash('danger', 'Please fill in all required fields.');
+        redirect(BASE_URL . '/admin/students/add.php');
+    }
+    
+    // Check if student ID already exists
+    if (!empty($data['student_id_custom']) && $studentModel->studentIdExists($data['student_id_custom'])) {
+        setFlash('danger', 'Student ID already exists. Please use a unique ID.');
         redirect(BASE_URL . '/admin/students/add.php');
     }
     
@@ -97,6 +104,13 @@ require_once __DIR__ . '/../../includes/admin_header.php';
                 <div class="form-group">
                     <label for="name">Full Name <span style="color: red;">*</span></label>
                     <input type="text" id="name" name="name" class="form-control" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="student_id_custom">Student ID</label>
+                    <input type="text" id="student_id_custom" name="student_id_custom" class="form-control" 
+                           placeholder="e.g., S001, STU2024001">
+                    <small class="text-muted">Optional unique identifier for this student</small>
                 </div>
                 
                 <div class="form-group">

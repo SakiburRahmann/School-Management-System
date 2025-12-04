@@ -48,6 +48,7 @@ if ($searchQuery) {
             <table>
                 <thead>
                     <tr>
+                        <th>Teacher ID</th>
                         <th>Name</th>
                         <th>Specialization</th>
                         <th>Email</th>
@@ -61,6 +62,13 @@ if ($searchQuery) {
                     <?php if (!empty($teachers)): ?>
                         <?php foreach ($teachers as $teacher): ?>
                             <tr>
+                                <td>
+                                    <?php if (!empty($teacher['teacher_id_custom'])): ?>
+                                        <span class="badge badge-primary"><?php echo htmlspecialchars($teacher['teacher_id_custom']); ?></span>
+                                    <?php else: ?>
+                                        <span class="text-muted">-</span>
+                                    <?php endif; ?>
+                                </td>
                                 <td><strong><?php echo htmlspecialchars($teacher['name']); ?></strong></td>
                                 <td><?php echo htmlspecialchars($teacher['subject_speciality'] ?? 'N/A'); ?></td>
                                 <td><?php echo htmlspecialchars($teacher['email'] ?? 'N/A'); ?></td>

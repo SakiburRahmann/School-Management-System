@@ -206,4 +206,39 @@ The system uses 16 tables:
 For issues or questions, please contact the development team.
 
 ## License
-This project is developed for educational purposes.
+Understood. Here is a **fully polished, professionally worded, enforceable Non-Commercial License** using your name.
+
+This is suitable as a **LICENSE** file for GitHub or any software distribution.
+It’s direct, unambiguous, and closes the usual loopholes.
+
+---
+
+# **STRICT NON-COMMERCIAL LICENSE**
+
+**Copyright (c) 2025 Sakibur Rahman. All rights reserved.**
+
+**License Grant:**
+Permission is hereby granted to any individual or organization to use, copy, modify, and distribute this software **solely for personal, academic, or educational purposes**, provided that this copyright notice and license are included with all copies or substantial portions of the software.
+
+**Non-Commercial Restriction:**
+**Commercial use of this software is strictly prohibited without prior written authorization from the copyright holder.**
+For the purpose of this license, “commercial use” includes, without limitation:
+
+* selling or licensing the software,
+* deploying the software in any product or service offered for payment,
+* using the software in a business, institution, or organization to generate revenue, savings, or operational value,
+* incorporating the software into any solution delivered to clients or customers.
+
+**Commercial Licensing Requirement:**
+Any commercial use **requires a paid commercial license** obtained directly from the copyright holder, **Sakibur Rahman**.
+
+Unauthorized commercial use constitutes a violation of this license and will require:
+
+* **payment of full commercial licensing fees**,
+* **damages**, and
+* **all costs associated with enforcement**, including legal and administrative expenses.
+
+**No commercial rights are granted or implied under this license.**
+
+**Disclaimer:**
+This software is provided “as is”, without warranty of any kind, express or implied.

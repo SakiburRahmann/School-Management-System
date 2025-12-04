@@ -137,6 +137,26 @@ class ClassModel extends BaseModel {
     }
     
     /**
+     * Check if class name exists
+     */
+    public function classNameExists($className, $excludeId = null) {
+        $sql = "SELECT COUNT(*) as total FROM {$this->table} 
+                WHERE class_name = :class_name";
+        
+        $params = ['class_name' => $className];
+        
+        if ($excludeId) {
+            $sql .= " AND class_id != :id";
+            $params['id'] = $excludeId;
+        }
+        
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+        $result = $stmt->fetch();
+        return $result['total'] > 0;
+    }
+    
+    /**
      * Get total classes count
      */
     public function getTotalCount() {

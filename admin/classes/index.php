@@ -3,8 +3,7 @@
  * Admin - Classes & Sections Management
  */
 
-$pageTitle = 'Classes & Sections';
-require_once __DIR__ . '/../../includes/admin_header.php';
+require_once __DIR__ . '/../../config.php';
 
 $classModel = new ClassModel();
 $teacherModel = new Teacher();
@@ -14,11 +13,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     if (verifyCSRFToken($_POST['csrf_token'])) {
         $className = sanitize($_POST['class_name']);
         if (!empty($className)) {
-            $classId = $classModel->create(['class_name' => $className]);
-            if ($classId) {
-                setFlash('success', 'Class added successfully!');
+            // Check if class name already exists
+            if ($classModel->classNameExists($className)) {
+                setFlash('danger', 'A class with this name already exists.');
             } else {
-                setFlash('danger', 'Failed to add class.');
+                $classId = $classModel->create(['class_name' => $className]);
+                if ($classId) {
+                    setFlash('success', 'Class added successfully!');
+                } else {
+                    setFlash('danger', 'Failed to add class.');
+                }
             }
         }
     }
@@ -53,6 +57,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 // Get all classes with sections
 $classes = $classModel->getClassesWithSections();
 $allTeachers = $teacherModel->findAll('name');
+
+$pageTitle = 'Classes & Sections';
+require_once __DIR__ . '/../../includes/admin_header.php';
 ?>
 
 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
@@ -109,14 +116,20 @@ $allTeachers = $teacherModel->findAll('name');
                 
                 <div class="form-group">
                     <label for="class_teacher_id">Class Teacher (Optional)</label>
-                    <select id="class_teacher_id" name="class_teacher_id" class="form-control">
+                    <input list="teachers_list" id="class_teacher_id" name="class_teacher_id" class="form-control" 
+                           placeholder="Type to search teachers...">
+                    <datalist id="teachers_list">
                         <option value="">Select Teacher</option>
                         <?php foreach ($allTeachers as $teacher): ?>
                             <option value="<?php echo $teacher['teacher_id']; ?>">
                                 <?php echo htmlspecialchars($teacher['name']); ?>
+                                <?php if (!empty($teacher['teacher_id_custom'])): ?>
+                                    (ID: <?php echo htmlspecialchars($teacher['teacher_id_custom']); ?>)
+                                <?php endif; ?>
                             </option>
                         <?php endforeach; ?>
-                    </select>
+                    </datalist>
+                    <small class="text-muted">Start typing to search for a teacher</small>
                 </div>
                 
                 <button type="submit" class="btn btn-primary">
@@ -142,9 +155,16 @@ $allTeachers = $teacherModel->findAll('name');
                             <h4 style="margin: 0; color: var(--primary);">
                                 <?php echo htmlspecialchars($class['class_name']); ?>
                             </h4>
-                            <span class="badge badge-info">
-                                <?php echo $class['section_count']; ?> Section<?php echo $class['section_count'] != 1 ? 's' : ''; ?>
-                            </span>
+                            <div style="display: flex; gap: 0.5rem; align-items: center;">
+                                <span class="badge badge-info">
+                                    <?php echo $class['section_count']; ?> Section<?php echo $class['section_count'] != 1 ? 's' : ''; ?>
+                                </span>
+                                <a href="<?php echo BASE_URL; ?>/admin/classes/delete_class.php?id=<?php echo $class['class_id']; ?>" 
+                                   class="btn btn-danger btn-sm"
+                                   onclick="return confirmDelete('Delete this class? All sections must be deleted first.');">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                            </div>
                         </div>
                         
                         <?php if (!empty($classDetails['sections'])): ?>
