@@ -17,7 +17,7 @@ $searchQuery = $_GET['search'] ?? '';
 
 // Get students
 if ($searchQuery) {
-    $students = $studentModel->search($searchQuery);
+    $students = $studentModel->search($searchQuery, $classFilter ?: null, $sectionFilter ?: null);
 } elseif ($classFilter) {
     $students = $studentModel->getByClass($classFilter, $sectionFilter ?: null);
 } else {

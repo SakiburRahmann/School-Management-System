@@ -4,6 +4,8 @@
  * Promote students from one class to another
  */
 
+require_once __DIR__ . '/../../config.php';
+
 $classModel = new ClassModel();
 $studentModel = new Student();
 

@@ -60,25 +60,37 @@ class Student extends BaseModel {
     /**
      * Search students
      */
-    public function search($keyword) {
+    public function search($keyword, $classId = null, $sectionId = null) {
         $sql = "SELECT s.*, c.class_name, sec.section_name 
                 FROM {$this->table} s
                 LEFT JOIN classes c ON s.class_id = c.class_id
                 LEFT JOIN sections sec ON s.section_id = sec.section_id
-                WHERE s.name LIKE :keyword1 
+                WHERE (s.name LIKE :keyword1 
                 OR s.roll_number LIKE :keyword2
                 OR s.guardian_name LIKE :keyword3
-                OR s.guardian_phone LIKE :keyword4
-                ORDER BY s.name";
+                OR s.guardian_phone LIKE :keyword4)";
+        
+        $params = [
+            'keyword1' => "%{$keyword}%",
+            'keyword2' => "%{$keyword}%",
+            'keyword3' => "%{$keyword}%",
+            'keyword4' => "%{$keyword}%"
+        ];
+        
+        if ($classId) {
+            $sql .= " AND s.class_id = :class_id";
+            $params['class_id'] = $classId;
+        }
+        
+        if ($sectionId) {
+            $sql .= " AND s.section_id = :section_id";
+            $params['section_id'] = $sectionId;
+        }
+        
+        $sql .= " ORDER BY s.name";
         
         $stmt = $this->db->prepare($sql);
-        $searchTerm = "%{$keyword}%";
-        $stmt->execute([
-            'keyword1' => $searchTerm,
-            'keyword2' => $searchTerm,
-            'keyword3' => $searchTerm,
-            'keyword4' => $searchTerm
-        ]);
+        $stmt->execute($params);
         return $stmt->fetchAll();
     }
     

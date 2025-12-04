@@ -4,6 +4,8 @@
  * Import students from CSV
  */
 
+require_once __DIR__ . '/../../config.php';
+
 $studentModel = new Student();
 $classModel = new ClassModel();
 

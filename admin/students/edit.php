@@ -4,6 +4,8 @@
  * Form to edit student details
  */
 
+require_once __DIR__ . '/../../config.php';
+
 $studentModel = new Student();
 $classModel = new ClassModel();
 
