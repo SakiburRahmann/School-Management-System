@@ -206,13 +206,6 @@ The system uses 16 tables:
 For issues or questions, please contact the development team.
 
 ## License
-Understood. Here is a **fully polished, professionally worded, enforceable Non-Commercial License** using your name.
-
-This is suitable as a **LICENSE** file for GitHub or any software distribution.
-It’s direct, unambiguous, and closes the usual loopholes.
-
----
-
 # **STRICT NON-COMMERCIAL LICENSE**
 
 **Copyright (c) 2025 Sakibur Rahman. All rights reserved.**
