@@ -95,8 +95,9 @@ if ($searchQuery) {
                                         <i class="fas fa-edit"></i>
                                     </a>
                                     <a href="<?php echo BASE_URL; ?>/admin/teachers/delete.php?id=<?php echo $teacher['teacher_id']; ?>" 
-                                       class="btn btn-danger btn-sm" 
-                                       onclick="return confirmDelete('Are you sure you want to delete this teacher?');"
+                                       class="btn btn-danger btn-sm delete-btn" 
+                                       data-delete-url="<?php echo BASE_URL; ?>/admin/teachers/delete.php?id=<?php echo $teacher['teacher_id']; ?>"
+                                       data-delete-message="Are you sure you want to delete teacher '<?php echo htmlspecialchars($teacher['name']); ?>'?"
                                        title="Delete">
                                         <i class="fas fa-trash"></i>
                                     </a>

@@ -62,6 +62,20 @@ $pageTitle = 'Classes & Sections';
 require_once __DIR__ . '/../../includes/admin_header.php';
 ?>
 
+<script>
+// Test toast on page load
+setTimeout(function() {
+    console.log('Testing toast...');
+    console.log('showToast function exists:', typeof showToast);
+    if (typeof showToast === 'function') {
+        console.log('Calling showToast...');
+        showToast('Page loaded successfully!', 'info');
+    } else {
+        console.error('showToast function not found!');
+    }
+}, 500);
+</script>
+
 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
     <!-- Add Class Card -->
     <div class="card">
@@ -69,7 +83,7 @@ require_once __DIR__ . '/../../includes/admin_header.php';
             <h3>Add New Class</h3>
         </div>
         <div class="card-body">
-            <form method="POST" action="">
+            <form method="POST" action="" id="addClassForm">
                 <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
                 <input type="hidden" name="action" value="add_class">
                 
@@ -92,7 +106,7 @@ require_once __DIR__ . '/../../includes/admin_header.php';
             <h3>Add New Section</h3>
         </div>
         <div class="card-body">
-            <form method="POST" action="">
+            <form method="POST" action="" id="addSectionForm">
                 <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
                 <input type="hidden" name="action" value="add_section">
                 
@@ -116,19 +130,19 @@ require_once __DIR__ . '/../../includes/admin_header.php';
                 
                 <div class="form-group">
                     <label for="class_teacher_id">Class Teacher (Optional)</label>
-                    <input list="teachers_list" id="class_teacher_id" name="class_teacher_id" class="form-control" 
-                           placeholder="Type to search teachers...">
-                    <datalist id="teachers_list">
+                    <select id="class_teacher_id" name="class_teacher_id" class="form-control">
                         <option value="">Select Teacher</option>
                         <?php foreach ($allTeachers as $teacher): ?>
-                            <option value="<?php echo $teacher['teacher_id']; ?>">
+                            <option value="<?php echo $teacher['teacher_id']; ?>" 
+                                    data-name="<?php echo htmlspecialchars($teacher['name']); ?>"
+                                    data-custom-id="<?php echo htmlspecialchars($teacher['teacher_id_custom'] ?? ''); ?>">
                                 <?php echo htmlspecialchars($teacher['name']); ?>
                                 <?php if (!empty($teacher['teacher_id_custom'])): ?>
                                     (ID: <?php echo htmlspecialchars($teacher['teacher_id_custom']); ?>)
                                 <?php endif; ?>
                             </option>
                         <?php endforeach; ?>
-                    </datalist>
+                    </select>
                     <small class="text-muted">Start typing to search for a teacher</small>
                 </div>
                 
@@ -150,7 +164,7 @@ require_once __DIR__ . '/../../includes/admin_header.php';
             <div style="display: grid; gap: 1.5rem;">
                 <?php foreach ($classes as $class): ?>
                     <?php $classDetails = $classModel->getClassDetails($class['class_id']); ?>
-                    <div style="border: 2px solid var(--light); border-radius: 10px; padding: 1.5rem;">
+                    <div data-class-id="<?php echo $class['class_id']; ?>" data-class-name="<?php echo htmlspecialchars($class['class_name']); ?>" style="border: 2px solid var(--light); border-radius: 10px; padding: 1.5rem;">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
                             <h4 style="margin: 0; color: var(--primary);">
                                 <?php echo htmlspecialchars($class['class_name']); ?>
@@ -160,8 +174,9 @@ require_once __DIR__ . '/../../includes/admin_header.php';
                                     <?php echo $class['section_count']; ?> Section<?php echo $class['section_count'] != 1 ? 's' : ''; ?>
                                 </span>
                                 <a href="<?php echo BASE_URL; ?>/admin/classes/delete_class.php?id=<?php echo $class['class_id']; ?>" 
-                                   class="btn btn-danger btn-sm"
-                                   onclick="return confirmDelete('Delete this class? All sections must be deleted first.');">
+                                   class="btn btn-danger btn-sm delete-btn"
+                                   data-delete-url="<?php echo BASE_URL; ?>/admin/classes/delete_class.php?id=<?php echo $class['class_id']; ?>"
+                                   data-delete-message="Are you sure you want to delete class '<?php echo htmlspecialchars($class['class_name']); ?>'? All sections must be deleted first.">
                                     <i class="fas fa-trash"></i>
                                 </a>
                             </div>
@@ -170,12 +185,13 @@ require_once __DIR__ . '/../../includes/admin_header.php';
                         <?php if (!empty($classDetails['sections'])): ?>
                             <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1rem;">
                                 <?php foreach ($classDetails['sections'] as $section): ?>
-                                    <div style="background: var(--light); padding: 1rem; border-radius: 8px;">
+                                    <div data-section-name="<?php echo htmlspecialchars($section['section_name']); ?>" style="background: var(--light); padding: 1rem; border-radius: 8px;">
                                         <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.5rem;">
                                             <strong style="font-size: 1.1rem;">Section <?php echo htmlspecialchars($section['section_name']); ?></strong>
                                             <a href="<?php echo BASE_URL; ?>/admin/classes/delete_section.php?id=<?php echo $section['section_id']; ?>" 
-                                               class="btn btn-danger btn-sm"
-                                               onclick="return confirmDelete('Delete this section?');">
+                                               class="btn btn-danger btn-sm delete-btn"
+                                               data-delete-url="<?php echo BASE_URL; ?>/admin/classes/delete_section.php?id=<?php echo $section['section_id']; ?>"
+                                               data-delete-message="Are you sure you want to delete Section '<?php echo htmlspecialchars($section['section_name']); ?>' from <?php echo htmlspecialchars($class['class_name']); ?>?">
                                                 <i class="fas fa-trash"></i>
                                             </a>
                                         </div>
@@ -197,5 +213,220 @@ require_once __DIR__ . '/../../includes/admin_header.php';
         <?php endif; ?>
     </div>
 </div>
+
+<script>
+// Make teacher select searchable
+document.addEventListener('DOMContentLoaded', function() {
+    const teacherSelect = document.getElementById('class_teacher_id');
+    
+    if (teacherSelect) {
+        // Store original options
+        const originalOptions = Array.from(teacherSelect.options);
+        
+        // Create a search input wrapper
+        const wrapper = document.createElement('div');
+        wrapper.style.position = 'relative';
+        teacherSelect.parentNode.insertBefore(wrapper, teacherSelect);
+        wrapper.appendChild(teacherSelect);
+        
+        // Create search input
+        const searchInput = document.createElement('input');
+        searchInput.type = 'text';
+        searchInput.className = 'form-control';
+        searchInput.placeholder = 'Type to search teachers...';
+        searchInput.style.marginBottom = '5px';
+        
+        // Insert search input before select
+        wrapper.insertBefore(searchInput, teacherSelect);
+        
+        // Hide select initially, show on focus
+        teacherSelect.style.display = 'none';
+        teacherSelect.size = 8;
+        
+        // Track if user has made a valid selection
+        let validSelection = true;
+        
+        // Show/hide select on search input focus
+        searchInput.addEventListener('focus', function() {
+            teacherSelect.style.display = 'block';
+            filterOptions('');
+        });
+        
+        // Filter options as user types
+        searchInput.addEventListener('input', function() {
+            filterOptions(this.value);
+            // Mark as invalid selection when user types
+            if (this.value.trim() !== '') {
+                validSelection = false;
+                searchInput.style.borderColor = '#ffc107'; // Warning color
+            } else {
+                validSelection = true;
+                teacherSelect.value = ''; // Clear selection
+                searchInput.style.borderColor = '';
+            }
+        });
+        
+        // Update search input when option is selected
+        teacherSelect.addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            if (selectedOption.value) {
+                searchInput.value = selectedOption.text;
+                validSelection = true;
+                searchInput.style.borderColor = '#28a745'; // Success color
+            } else {
+                searchInput.value = '';
+                validSelection = true;
+                searchInput.style.borderColor = '';
+            }
+            teacherSelect.style.display = 'none';
+        });
+        
+        // Handle clicking on an option
+        teacherSelect.addEventListener('click', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            if (selectedOption.value) {
+                searchInput.value = selectedOption.text;
+                validSelection = true;
+                searchInput.style.borderColor = '#28a745';
+            } else {
+                searchInput.value = '';
+                validSelection = true;
+                searchInput.style.borderColor = '';
+            }
+            teacherSelect.style.display = 'none';
+        });
+        
+        // Hide select when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!wrapper.contains(e.target)) {
+                teacherSelect.style.display = 'none';
+            }
+        });
+        
+        // Form validation
+        const form = teacherSelect.closest('form');
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                // If there's text in search input but no valid selection
+                if (searchInput.value.trim() !== '' && !validSelection) {
+                    e.preventDefault();
+                    searchInput.style.borderColor = '#dc3545'; // Danger color
+                    showToast('Please select a teacher from the dropdown list, or clear the field to leave it empty.', 'warning');
+                    searchInput.focus();
+                    teacherSelect.style.display = 'block';
+                    filterOptions(searchInput.value);
+                    return false;
+                }
+                
+                // If search input is empty, make sure select is also empty
+                if (searchInput.value.trim() === '') {
+                    teacherSelect.value = '';
+                }
+            });
+        }
+        
+        function filterOptions(searchTerm) {
+            const term = searchTerm.toLowerCase();
+            
+            // Clear current options
+            teacherSelect.innerHTML = '';
+            
+            // Filter and add matching options
+            originalOptions.forEach(option => {
+                const text = option.text.toLowerCase();
+                const customId = option.getAttribute('data-custom-id') || '';
+                const name = option.getAttribute('data-name') || '';
+                
+                if (option.value === '' || 
+                    text.includes(term) || 
+                    customId.toLowerCase().includes(term) ||
+                    name.toLowerCase().includes(term)) {
+                    teacherSelect.appendChild(option.cloneNode(true));
+                }
+            });
+        }
+    }
+    
+    // Validate duplicate sections
+    const addSectionForm = document.getElementById('addSectionForm');
+    if (addSectionForm) {
+        addSectionForm.addEventListener('submit', function(e) {
+            const classId = document.getElementById('class_id').value;
+            const sectionName = document.getElementById('section_name').value.trim();
+            
+            if (!classId || !sectionName) {
+                return; // Let HTML5 validation handle this
+            }
+            
+            // Get all existing sections for the selected class
+            const classCards = document.querySelectorAll('[data-class-id]');
+            let isDuplicate = false;
+            
+            classCards.forEach(card => {
+                if (card.getAttribute('data-class-id') === classId) {
+                    const sections = card.querySelectorAll('[data-section-name]');
+                    sections.forEach(section => {
+                        const existingSectionName = section.getAttribute('data-section-name').trim();
+                        if (existingSectionName.toLowerCase() === sectionName.toLowerCase()) {
+                            isDuplicate = true;
+                        }
+                    });
+                }
+            });
+            
+            if (isDuplicate) {
+                e.preventDefault();
+                const sectionInput = document.getElementById('section_name');
+                sectionInput.style.borderColor = '#dc3545';
+                showToast('A section with this name already exists in the selected class. Please use a different name.', 'warning');
+                sectionInput.focus();
+                return false;
+            }
+        });
+        
+        // Reset border color when user types
+        document.getElementById('section_name').addEventListener('input', function() {
+            this.style.borderColor = '';
+        });
+    }
+    
+    // Validate duplicate class names
+    const addClassForm = document.getElementById('addClassForm');
+    if (addClassForm) {
+        addClassForm.addEventListener('submit', function(e) {
+            const className = document.getElementById('class_name').value.trim();
+            
+            if (!className) {
+                return; // Let HTML5 validation handle this
+            }
+            
+            // Get all existing class names
+            const classCards = document.querySelectorAll('[data-class-name]');
+            let isDuplicate = false;
+            
+            classCards.forEach(card => {
+                const existingClassName = card.getAttribute('data-class-name').trim();
+                if (existingClassName.toLowerCase() === className.toLowerCase()) {
+                    isDuplicate = true;
+                }
+            });
+            
+            if (isDuplicate) {
+                e.preventDefault();
+                const classInput = document.getElementById('class_name');
+                classInput.style.borderColor = '#dc3545';
+                showToast('A class with this name already exists. Please use a different name.', 'warning');
+                classInput.focus();
+                return false;
+            }
+        });
+        
+        // Reset border color when user types
+        document.getElementById('class_name').addEventListener('input', function() {
+            this.style.borderColor = '';
+        });
+    }
+});
+</script>
 
 <?php require_once __DIR__ . '/../../includes/admin_footer.php'; ?>

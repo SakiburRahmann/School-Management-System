@@ -25,6 +25,8 @@ if (!$student) {
     redirect(BASE_URL . '/admin/students/');
 }
 
+$errors = [];
+
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Verify CSRF token
@@ -33,9 +35,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         redirect(BASE_URL . '/admin/students/edit.php?id=' . $studentId);
     }
     
+    $studentIdCustom = trim(sanitize($_POST['student_id_custom']));
+    $name = trim(sanitize($_POST['name']));
+    
     $data = [
-        'name' => sanitize($_POST['name']),
-        'student_id_custom' => sanitize($_POST['student_id_custom']),
+        'name' => $name,
+        'student_id_custom' => $studentIdCustom,
         'class_id' => $_POST['class_id'] ?: null,
         'section_id' => $_POST['section_id'] ?: null,
         'roll_number' => $_POST['roll_number'] ?: null,
@@ -48,23 +53,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     ];
     
     // Validate required fields
-    if (empty($data['name']) || empty($data['guardian_name'])) {
-        setFlash('danger', 'Please fill in all required fields.');
-        redirect(BASE_URL . '/admin/students/edit.php?id=' . $studentId);
+    if (empty($data['name'])) {
+        $errors['name'] = 'Student name is required.';
     }
     
-    // Check if student ID already exists (excluding current student)
-    if (!empty($data['student_id_custom']) && $studentModel->studentIdExists($data['student_id_custom'], $studentId)) {
-        setFlash('danger', 'Student ID already exists. Please use a unique ID.');
-        redirect(BASE_URL . '/admin/students/edit.php?id=' . $studentId);
+    if (empty($data['student_id_custom'])) {
+        $errors['student_id_custom'] = 'Student ID is required.';
+    } elseif ($studentModel->studentIdExists($data['student_id_custom'], $studentId)) {
+        $errors['student_id_custom'] = 'This Student ID already exists. Please use a unique ID.';
     }
     
     // Check if roll number exists (exclude current student)
     if ($data['roll_number'] && $data['class_id'] && $data['section_id']) {
         if ($studentModel->rollNumberExists($data['class_id'], $data['section_id'], $data['roll_number'], $studentId)) {
-            setFlash('danger', 'Roll number already exists in this class and section.');
-            redirect(BASE_URL . '/admin/students/edit.php?id=' . $studentId);
+            $errors['roll_number'] = 'Roll number already exists in this class and section.';
         }
+    }
+    
+    if (!empty($errors)) {
+        // Store errors in session for display
+        $_SESSION['form_errors'] = $errors;
+        $_SESSION['form_data'] = $data;
+        redirect(BASE_URL . '/admin/students/edit.php?id=' . $studentId);
     }
     
     // Update student
@@ -75,6 +85,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         setFlash('danger', 'Failed to update student.');
     }
 }
+
+// Get any stored errors/data from previous submission
+$errors = $_SESSION['form_errors'] ?? [];
+$formData = $_SESSION['form_data'] ?? $student;
+unset($_SESSION['form_errors'], $_SESSION['form_data']);
 
 // Get all classes
 $classes = $classModel->getClassesWithSections();
@@ -92,52 +107,78 @@ require_once __DIR__ . '/../../includes/admin_header.php';
     </div>
     
     <div class="card-body">
-        <form method="POST" action="">
+        <?php if (!empty($errors)): ?>
+        <div class="validation-alert validation-alert-danger">
+            <div class="validation-alert-icon">
+                <i class="fas fa-exclamation-circle"></i>
+            </div>
+            <div class="validation-alert-content">
+                <strong>Please fix the following errors:</strong>
+                <ul>
+                    <?php foreach ($errors as $error): ?>
+                        <li><?php echo htmlspecialchars($error); ?></li>
+                    <?php endforeach; ?>
+                </ul>
+            </div>
+            <button class="validation-alert-close" onclick="this.parentElement.remove()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <?php endif; ?>
+        
+        <form method="POST" action="" id="studentForm" novalidate>
             <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
             
             <h4 style="margin-bottom: 1rem; color: var(--primary);">Personal Information</h4>
             
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
-                <div class="form-group">
-                    <label for="name">Full Name <span style="color: red;">*</span></label>
+                <div class="form-group <?php echo isset($errors['name']) ? 'has-error' : ''; ?>">
+                    <label for="name">Full Name <span class="required-star">*</span></label>
                     <input type="text" id="name" name="name" class="form-control" 
-                           value="<?php echo htmlspecialchars($student['name']); ?>" required>
+                           value="<?php echo htmlspecialchars($formData['name'] ?? ''); ?>"
+                           placeholder="Enter student's full name" required>
+                    <div class="field-error" id="name-error">
+                        <?php echo isset($errors['name']) ? htmlspecialchars($errors['name']) : ''; ?>
+                    </div>
                 </div>
                 
-                <div class="form-group">
-                    <label for="student_id_custom">Student ID</label>
+                <div class="form-group <?php echo isset($errors['student_id_custom']) ? 'has-error' : ''; ?>">
+                    <label for="student_id_custom">Student ID <span class="required-star">*</span></label>
                     <input type="text" id="student_id_custom" name="student_id_custom" class="form-control" 
-                           placeholder="e.g., S001, STU2024001"
-                           value="<?php echo htmlspecialchars($student['student_id_custom'] ?? ''); ?>">
-                    <small class="text-muted">Optional unique identifier for this student</small>
+                           value="<?php echo htmlspecialchars($formData['student_id_custom'] ?? ''); ?>"
+                           placeholder="e.g., S001, STU2024001" required>
+                    <div class="field-error" id="student_id_custom-error">
+                        <?php echo isset($errors['student_id_custom']) ? htmlspecialchars($errors['student_id_custom']) : ''; ?>
+                    </div>
+                    <small class="text-muted">Unique identifier for this student</small>
                 </div>
                 
                 <div class="form-group">
                     <label for="date_of_birth">Date of Birth</label>
                     <input type="date" id="date_of_birth" name="date_of_birth" class="form-control"
-                           value="<?php echo $student['date_of_birth']; ?>">
+                           value="<?php echo htmlspecialchars($formData['date_of_birth'] ?? ''); ?>">
                 </div>
                 
                 <div class="form-group">
                     <label for="gender">Gender</label>
                     <select id="gender" name="gender" class="form-control">
                         <option value="">Select Gender</option>
-                        <option value="Male" <?php echo $student['gender'] == 'Male' ? 'selected' : ''; ?>>Male</option>
-                        <option value="Female" <?php echo $student['gender'] == 'Female' ? 'selected' : ''; ?>>Female</option>
-                        <option value="Other" <?php echo $student['gender'] == 'Other' ? 'selected' : ''; ?>>Other</option>
+                        <option value="Male" <?php echo ($formData['gender'] ?? '') == 'Male' ? 'selected' : ''; ?>>Male</option>
+                        <option value="Female" <?php echo ($formData['gender'] ?? '') == 'Female' ? 'selected' : ''; ?>>Female</option>
+                        <option value="Other" <?php echo ($formData['gender'] ?? '') == 'Other' ? 'selected' : ''; ?>>Other</option>
                     </select>
                 </div>
                 
                 <div class="form-group">
                     <label for="contact_details">Email/Phone</label>
                     <input type="text" id="contact_details" name="contact_details" class="form-control"
-                           value="<?php echo htmlspecialchars($student['contact_details']); ?>">
+                           value="<?php echo htmlspecialchars($formData['contact_details'] ?? ''); ?>">
                 </div>
             </div>
             
             <div class="form-group">
                 <label for="address">Address</label>
-                <textarea id="address" name="address" class="form-control" rows="3"><?php echo htmlspecialchars($student['address']); ?></textarea>
+                <textarea id="address" name="address" class="form-control" rows="3"><?php echo htmlspecialchars($formData['address'] ?? ''); ?></textarea>
             </div>
             
             <h4 style="margin: 2rem 0 1rem; color: var(--primary);">Academic Information</h4>
@@ -149,7 +190,7 @@ require_once __DIR__ . '/../../includes/admin_header.php';
                         <option value="">Select Class</option>
                         <?php foreach ($classes as $class): ?>
                             <option value="<?php echo $class['class_id']; ?>" 
-                                    <?php echo $student['class_id'] == $class['class_id'] ? 'selected' : ''; ?>>
+                                    <?php echo ($formData['class_id'] ?? '') == $class['class_id'] ? 'selected' : ''; ?>>
                                 <?php echo htmlspecialchars($class['class_name']); ?>
                             </option>
                         <?php endforeach; ?>
@@ -160,14 +201,16 @@ require_once __DIR__ . '/../../includes/admin_header.php';
                     <label for="section_id">Section</label>
                     <select id="section_id" name="section_id" class="form-control">
                         <option value="">Select Section</option>
-                        <!-- Sections will be loaded via JS, but we need to pre-select -->
                     </select>
                 </div>
                 
-                <div class="form-group">
+                <div class="form-group <?php echo isset($errors['roll_number']) ? 'has-error' : ''; ?>">
                     <label for="roll_number">Roll Number</label>
                     <input type="number" id="roll_number" name="roll_number" class="form-control"
-                           value="<?php echo htmlspecialchars($student['roll_number']); ?>">
+                           value="<?php echo htmlspecialchars($formData['roll_number'] ?? ''); ?>">
+                    <div class="field-error" id="roll_number-error">
+                        <?php echo isset($errors['roll_number']) ? htmlspecialchars($errors['roll_number']) : ''; ?>
+                    </div>
                 </div>
             </div>
             
@@ -175,20 +218,20 @@ require_once __DIR__ . '/../../includes/admin_header.php';
             
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
                 <div class="form-group">
-                    <label for="guardian_name">Guardian Name <span style="color: red;">*</span></label>
+                    <label for="guardian_name">Guardian Name</label>
                     <input type="text" id="guardian_name" name="guardian_name" class="form-control" 
-                           value="<?php echo htmlspecialchars($student['guardian_name']); ?>" required>
+                           value="<?php echo htmlspecialchars($formData['guardian_name'] ?? ''); ?>">
                 </div>
                 
                 <div class="form-group">
                     <label for="guardian_phone">Guardian Phone</label>
                     <input type="text" id="guardian_phone" name="guardian_phone" class="form-control"
-                           value="<?php echo htmlspecialchars($student['guardian_phone']); ?>">
+                           value="<?php echo htmlspecialchars($formData['guardian_phone'] ?? ''); ?>">
                 </div>
             </div>
             
             <div style="margin-top: 2rem; display: flex; gap: 1rem;">
-                <button type="submit" class="btn btn-primary">
+                <button type="submit" class="btn btn-primary" id="submitBtn">
                     <i class="fas fa-save"></i> Update Student
                 </button>
                 <a href="<?php echo BASE_URL; ?>/admin/students/" class="btn btn-secondary">
@@ -225,11 +268,92 @@ function loadSections(classId, selectedSectionId = null) {
 
 // Initial load
 document.addEventListener('DOMContentLoaded', function() {
-    const classId = '<?php echo $student['class_id']; ?>';
-    const sectionId = '<?php echo $student['section_id']; ?>';
+    const classId = '<?php echo $formData['class_id'] ?? ''; ?>';
+    const sectionId = '<?php echo $formData['section_id'] ?? ''; ?>';
     if (classId) {
         loadSections(classId, sectionId);
     }
+    
+    const form = document.getElementById('studentForm');
+    const requiredFields = [
+        { id: 'name', label: 'Full Name' },
+        { id: 'student_id_custom', label: 'Student ID' }
+    ];
+    
+    // Real-time validation on input
+    requiredFields.forEach(field => {
+        const input = document.getElementById(field.id);
+        const errorDiv = document.getElementById(field.id + '-error');
+        
+        input.addEventListener('input', function() {
+            const formGroup = this.closest('.form-group');
+            if (this.value.trim() !== '') {
+                formGroup.classList.remove('has-error');
+                formGroup.classList.add('is-valid');
+                errorDiv.textContent = '';
+            } else {
+                formGroup.classList.remove('is-valid');
+            }
+        });
+        
+        input.addEventListener('blur', function() {
+            validateField(this, field.label);
+        });
+    });
+    
+    // Form submission validation
+    form.addEventListener('submit', function(e) {
+        let isValid = true;
+        
+        requiredFields.forEach(field => {
+            const input = document.getElementById(field.id);
+            if (!validateField(input, field.label)) {
+                isValid = false;
+            }
+        });
+        
+        if (!isValid) {
+            e.preventDefault();
+            showToast('Please fill in all required fields', 'danger');
+            
+            // Scroll to first error
+            const firstError = form.querySelector('.has-error');
+            if (firstError) {
+                firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+    });
+    
+    function validateField(input, label) {
+        const formGroup = input.closest('.form-group');
+        const errorDiv = document.getElementById(input.id + '-error');
+        
+        if (input.value.trim() === '') {
+            formGroup.classList.add('has-error');
+            formGroup.classList.remove('is-valid');
+            errorDiv.textContent = label + ' is required';
+            
+            // Add shake animation
+            formGroup.classList.add('shake');
+            setTimeout(() => formGroup.classList.remove('shake'), 500);
+            
+            return false;
+        }
+        
+        formGroup.classList.remove('has-error');
+        formGroup.classList.add('is-valid');
+        errorDiv.textContent = '';
+        return true;
+    }
+    
+    // Show existing errors with animation on page load
+    <?php if (!empty($errors)): ?>
+    document.querySelectorAll('.has-error').forEach(el => {
+        el.classList.add('shake');
+        setTimeout(() => el.classList.remove('shake'), 500);
+    });
+    showToast('Please fix the errors below', 'danger');
+    <?php endif; ?>
 });
 </script>
 

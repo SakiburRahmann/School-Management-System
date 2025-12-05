@@ -108,8 +108,9 @@ $classes = $classModel->findAll('class_name');
                                         <i class="fas fa-edit"></i>
                                     </a>
                                     <a href="<?php echo BASE_URL; ?>/admin/students/delete.php?id=<?php echo $student['student_id']; ?>" 
-                                       class="btn btn-danger btn-sm" 
-                                       onclick="return confirmDelete('Are you sure you want to delete this student?');"
+                                       class="btn btn-danger btn-sm delete-btn" 
+                                       data-delete-url="<?php echo BASE_URL; ?>/admin/students/delete.php?id=<?php echo $student['student_id']; ?>"
+                                       data-delete-message="Are you sure you want to delete student '<?php echo htmlspecialchars($student['name']); ?>'?"
                                        title="Delete">
                                         <i class="fas fa-trash"></i>
                                     </a>

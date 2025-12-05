@@ -16,7 +16,14 @@ class ClassModel extends BaseModel {
                 FROM {$this->table} c
                 LEFT JOIN sections s ON c.class_id = s.class_id
                 GROUP BY c.class_id
-                ORDER BY c.class_name";
+                ORDER BY 
+                    CASE 
+                        WHEN c.class_name REGEXP '^[0-9]+$' THEN 1
+                        WHEN c.class_name REGEXP '^[^0-9]+$' THEN 2
+                        ELSE 3
+                    END,
+                    CAST(REGEXP_REPLACE(c.class_name, '[^0-9]', '') AS UNSIGNED),
+                    c.class_name";
         
         return $this->query($sql);
     }
@@ -118,7 +125,7 @@ class ClassModel extends BaseModel {
      */
     public function sectionExists($classId, $sectionName, $excludeId = null) {
         $sql = "SELECT COUNT(*) as total FROM sections 
-                WHERE class_id = :class_id AND section_name = :section_name";
+                WHERE class_id = :class_id AND LOWER(section_name) = LOWER(:section_name)";
         
         $params = [
             'class_id' => $classId,
@@ -141,7 +148,7 @@ class ClassModel extends BaseModel {
      */
     public function classNameExists($className, $excludeId = null) {
         $sql = "SELECT COUNT(*) as total FROM {$this->table} 
-                WHERE class_name = :class_name";
+                WHERE LOWER(class_name) = LOWER(:class_name)";
         
         $params = ['class_name' => $className];
         
