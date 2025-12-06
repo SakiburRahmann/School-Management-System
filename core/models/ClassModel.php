@@ -121,6 +121,24 @@ class ClassModel extends BaseModel {
     }
     
     /**
+     * Get comprehensive section details with student count and full teacher info
+     */
+    public function getSectionWithDetails($sectionId) {
+        $sql = "SELECT s.*, 
+                       c.class_name, c.class_id,
+                       t.teacher_id, t.name as class_teacher_name, 
+                       t.email as teacher_email, t.phone as teacher_phone,
+                       t.subject_speciality, t.teacher_id_custom,
+                       (SELECT COUNT(*) FROM students st WHERE st.section_id = s.section_id) as student_count
+                FROM sections s
+                JOIN classes c ON s.class_id = c.class_id
+                LEFT JOIN teachers t ON s.class_teacher_id = t.teacher_id
+                WHERE s.section_id = :section_id";
+        
+        return $this->queryOne($sql, ['section_id' => $sectionId]);
+    }
+    
+    /**
      * Check if section name exists in class
      */
     public function sectionExists($classId, $sectionName, $excludeId = null) {

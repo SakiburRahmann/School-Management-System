@@ -18,76 +18,18 @@ $images = $galleryModel->getAll();
     <title>Gallery - <?php echo SITE_NAME; ?></title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="<?php echo BASE_URL; ?>/public/css/style.css">
+    <link rel="stylesheet" href="<?php echo BASE_URL; ?>/public/css/style.css?v=<?php echo time(); ?>">
     <style>
-        .gallery-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 1.5rem;
-        }
-        .gallery-item {
-            position: relative;
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            transition: transform 0.3s ease;
-            cursor: pointer;
-            background: #eee;
-            aspect-ratio: 4/3;
-        }
-        .gallery-item:hover {
-            transform: translateY(-5px);
-        }
-        .gallery-item img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-        .gallery-caption {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
-            color: white;
-            padding: 2rem 1rem 1rem;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-        .gallery-item:hover .gallery-caption {
-            opacity: 1;
+        /* Gallery touch support - always show captions on mobile */
+        @media (max-width: 767px) {
+            .gallery-item .gallery-caption {
+                background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+            }
         }
     </style>
 </head>
 <body>
-    <!-- Header -->
-    <header class="site-header">
-        <div class="container">
-            <div class="header-content">
-                <div class="site-logo">
-                    <h1><?php echo SITE_NAME; ?></h1>
-                    <p>Excellence in Education</p>
-                </div>
-                
-                <nav class="main-nav">
-                    <ul>
-                        <li><a href="<?php echo BASE_URL; ?>/public/index.php">Home</a></li>
-                        <li><a href="<?php echo BASE_URL; ?>/public/about.php">About</a></li>
-                        <li><a href="<?php echo BASE_URL; ?>/public/academics.php">Academics</a></li>
-                        <li><a href="<?php echo BASE_URL; ?>/public/admissions.php">Admissions</a></li>
-                        <li><a href="<?php echo BASE_URL; ?>/public/events.php">Events</a></li>
-                        <li><a href="<?php echo BASE_URL; ?>/public/gallery.php" style="opacity: 1; font-weight: 600;">Gallery</a></li>
-                        <li><a href="<?php echo BASE_URL; ?>/public/notices.php">Notices</a></li>
-                        <li><a href="<?php echo BASE_URL; ?>/public/contact.php">Contact</a></li>
-                    </ul>
-                </nav>
-                
-                <a href="<?php echo BASE_URL; ?>/login.php" class="login-btn">
-                    <i class="fas fa-sign-in-alt"></i> Login
-                </a>
-            </div>
-        </div>
-    </header>
+    <?php require_once __DIR__ . '/../includes/public_header.php'; ?>
     
     <!-- Page Header -->
     <section class="hero" style="padding: 4rem 0;">

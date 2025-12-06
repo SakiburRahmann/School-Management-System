@@ -166,9 +166,15 @@ function searchTable(inputId, tableId) {
 }
 
 // Toggle sidebar on mobile
+// Toggle sidebar on mobile
 function toggleSidebar() {
     const sidebar = document.querySelector('.sidebar');
+    const overlay = document.querySelector('.sidebar-overlay');
+
     sidebar.classList.toggle('active');
+    if (overlay) {
+        overlay.classList.toggle('active');
+    }
 }
 
 // Toast Notification System

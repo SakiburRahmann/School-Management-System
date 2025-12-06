@@ -84,11 +84,18 @@ $currentUser = (new User())->find(getUserId());
 </head>
 <body>
     <div class="admin-wrapper">
+        <!-- Sidebar Overlay (for mobile) -->
+        <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+        
         <!-- Sidebar -->
-        <aside class="sidebar">
+        <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
                 <h2>SMS Admin</h2>
                 <p>School Management System</p>
+                <!-- Close button for mobile -->
+                <button class="sidebar-close" onclick="toggleSidebar()" aria-label="Close menu">
+                    <i class="fas fa-times"></i>
+                </button>
             </div>
             
             <nav class="sidebar-menu">
@@ -177,6 +184,12 @@ $currentUser = (new User())->find(getUserId());
             <!-- Header -->
             <header class="header">
                 <div class="header-left">
+                    <!-- Hamburger Menu Button (visible on mobile) -->
+                    <button class="hamburger-menu" id="hamburgerBtn" onclick="toggleSidebar()" aria-label="Toggle menu">
+                        <span class="hamburger-line"></span>
+                        <span class="hamburger-line"></span>
+                        <span class="hamburger-line"></span>
+                    </button>
                     <h1><?php echo $pageTitle ?? 'Dashboard'; ?></h1>
                 </div>
                 
@@ -192,6 +205,45 @@ $currentUser = (new User())->find(getUserId());
                     </div>
                 </div>
             </header>
+            
+            <script>
+            // Sidebar toggle functionality
+            function toggleSidebar() {
+                const sidebar = document.getElementById('sidebar');
+                const overlay = document.getElementById('sidebarOverlay');
+                const hamburger = document.getElementById('hamburgerBtn');
+                
+                sidebar.classList.toggle('active');
+                overlay.classList.toggle('active');
+                hamburger.classList.toggle('active');
+                
+                // Prevent body scroll when sidebar is open on mobile
+                if (sidebar.classList.contains('active')) {
+                    document.body.style.overflow = 'hidden';
+                } else {
+                    document.body.style.overflow = '';
+                }
+            }
+            
+            // Close sidebar when clicking a menu item on mobile
+            document.querySelectorAll('.sidebar .menu-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    if (window.innerWidth < 1024) {
+                        toggleSidebar();
+                    }
+                });
+            });
+            
+            // Handle window resize
+            window.addEventListener('resize', function() {
+                if (window.innerWidth >= 1024) {
+                    document.getElementById('sidebar').classList.remove('active');
+                    document.getElementById('sidebarOverlay').classList.remove('active');
+                    document.getElementById('hamburgerBtn').classList.remove('active');
+                    document.body.style.overflow = '';
+                }
+            });
+            </script>
             
             <!-- Content Area -->
             <div class="content">

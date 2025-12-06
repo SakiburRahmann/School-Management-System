@@ -13,37 +13,10 @@ require_once __DIR__ . '/../config.php';
     <title>About Us - <?php echo SITE_NAME; ?></title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="<?php echo BASE_URL; ?>/public/css/style.css">
+    <link rel="stylesheet" href="<?php echo BASE_URL; ?>/public/css/style.css?v=<?php echo time(); ?>">
 </head>
 <body>
-    <!-- Header -->
-    <header class="site-header">
-        <div class="container">
-            <div class="header-content">
-                <div class="site-logo">
-                    <h1><?php echo SITE_NAME; ?></h1>
-                    <p>Excellence in Education</p>
-                </div>
-                
-                <nav class="main-nav">
-                    <ul>
-                        <li><a href="<?php echo BASE_URL; ?>/public/index.php">Home</a></li>
-                        <li><a href="<?php echo BASE_URL; ?>/public/about.php" style="opacity: 1; font-weight: 600;">About</a></li>
-                        <li><a href="<?php echo BASE_URL; ?>/public/academics.php">Academics</a></li>
-                        <li><a href="<?php echo BASE_URL; ?>/public/admissions.php">Admissions</a></li>
-                        <li><a href="<?php echo BASE_URL; ?>/public/events.php">Events</a></li>
-                        <li><a href="<?php echo BASE_URL; ?>/public/gallery.php">Gallery</a></li>
-                        <li><a href="<?php echo BASE_URL; ?>/public/notices.php">Notices</a></li>
-                        <li><a href="<?php echo BASE_URL; ?>/public/contact.php">Contact</a></li>
-                    </ul>
-                </nav>
-                
-                <a href="<?php echo BASE_URL; ?>/login.php" class="login-btn">
-                    <i class="fas fa-sign-in-alt"></i> Login
-                </a>
-            </div>
-        </div>
-    </header>
+    <?php require_once __DIR__ . '/../includes/public_header.php'; ?>
     
     <!-- Page Header -->
     <section class="hero" style="padding: 4rem 0;">
@@ -56,54 +29,46 @@ require_once __DIR__ . '/../config.php';
     <!-- About Content -->
     <section class="section">
         <div class="container">
-            <div style="max-width: 900px; margin: 0 auto;">
-                <h2 style="margin-bottom: 1.5rem; color: var(--primary);">Our Mission</h2>
-                <p style="font-size: 1.125rem; line-height: 1.8; margin-bottom: 2rem;">
+            <div class="page-content">
+                <h2><i class="fas fa-bullseye"></i> Our Mission</h2>
+                <p>
                     Our mission is to provide a nurturing and stimulating environment where students can develop 
                     their full potential academically, socially, and emotionally. We are committed to fostering 
                     critical thinking, creativity, and a lifelong love of learning in every student.
                 </p>
                 
-                <h2 style="margin-bottom: 1.5rem; color: var(--primary);">Our Vision</h2>
-                <p style="font-size: 1.125rem; line-height: 1.8; margin-bottom: 2rem;">
+                <h2><i class="fas fa-eye"></i> Our Vision</h2>
+                <p>
                     We envision a school community where every student is empowered to become a responsible, 
                     compassionate, and innovative leader who contributes positively to society. Through excellence 
                     in education and character development, we prepare students for success in an ever-changing world.
                 </p>
                 
-                <h2 style="margin-bottom: 1.5rem; color: var(--primary);">Our Values</h2>
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
-                    <div style="padding: 1.5rem; background: var(--light); border-radius: 10px;">
-                        <h3 style="color: var(--primary); margin-bottom: 0.5rem;">
-                            <i class="fas fa-star"></i> Excellence
-                        </h3>
+                <h2><i class="fas fa-heart"></i> Our Values</h2>
+                <div class="value-grid">
+                    <div class="value-card">
+                        <h3><i class="fas fa-star"></i> Excellence</h3>
                         <p>We strive for the highest standards in everything we do.</p>
                     </div>
                     
-                    <div style="padding: 1.5rem; background: var(--light); border-radius: 10px;">
-                        <h3 style="color: var(--primary); margin-bottom: 0.5rem;">
-                            <i class="fas fa-heart"></i> Compassion
-                        </h3>
+                    <div class="value-card">
+                        <h3><i class="fas fa-heart"></i> Compassion</h3>
                         <p>We treat everyone with kindness, respect, and understanding.</p>
                     </div>
                     
-                    <div style="padding: 1.5rem; background: var(--light); border-radius: 10px;">
-                        <h3 style="color: var(--primary); margin-bottom: 0.5rem;">
-                            <i class="fas fa-lightbulb"></i> Innovation
-                        </h3>
+                    <div class="value-card">
+                        <h3><i class="fas fa-lightbulb"></i> Innovation</h3>
                         <p>We embrace creativity and new ideas in teaching and learning.</p>
                     </div>
                     
-                    <div style="padding: 1.5rem; background: var(--light); border-radius: 10px;">
-                        <h3 style="color: var(--primary); margin-bottom: 0.5rem;">
-                            <i class="fas fa-users"></i> Community
-                        </h3>
+                    <div class="value-card">
+                        <h3><i class="fas fa-users"></i> Community</h3>
                         <p>We build strong relationships and work together as a team.</p>
                     </div>
                 </div>
                 
-                <h2 style="margin-bottom: 1.5rem; color: var(--primary);">Our History</h2>
-                <p style="font-size: 1.125rem; line-height: 1.8; margin-bottom: 2rem;">
+                <h2><i class="fas fa-history"></i> Our History</h2>
+                <p>
                     Founded in 1999, our school has been a cornerstone of quality education in the community for 
                     over 25 years. What started as a small institution with just 50 students has grown into a 
                     thriving educational center serving hundreds of students from diverse backgrounds. Throughout 
@@ -111,34 +76,34 @@ require_once __DIR__ . '/../config.php';
                     and holistic education.
                 </p>
                 
-                <h2 style="margin-bottom: 1.5rem; color: var(--primary);">Our Facilities</h2>
-                <ul style="font-size: 1.125rem; line-height: 2; margin-bottom: 2rem;">
-                    <li><i class="fas fa-check" style="color: var(--success);"></i> Modern, well-equipped classrooms</li>
-                    <li><i class="fas fa-check" style="color: var(--success);"></i> State-of-the-art science laboratories</li>
-                    <li><i class="fas fa-check" style="color: var(--success);"></i> Comprehensive library with digital resources</li>
-                    <li><i class="fas fa-check" style="color: var(--success);"></i> Computer labs with latest technology</li>
-                    <li><i class="fas fa-check" style="color: var(--success);"></i> Sports facilities and playground</li>
-                    <li><i class="fas fa-check" style="color: var(--success);"></i> Auditorium for events and assemblies</li>
-                    <li><i class="fas fa-check" style="color: var(--success);"></i> Cafeteria with nutritious meals</li>
+                <h2><i class="fas fa-building"></i> Our Facilities</h2>
+                <ul class="facilities-list">
+                    <li><i class="fas fa-check"></i> Modern, well-equipped classrooms</li>
+                    <li><i class="fas fa-check"></i> State-of-the-art science laboratories</li>
+                    <li><i class="fas fa-check"></i> Comprehensive library with digital resources</li>
+                    <li><i class="fas fa-check"></i> Computer labs with latest technology</li>
+                    <li><i class="fas fa-check"></i> Sports facilities and playground</li>
+                    <li><i class="fas fa-check"></i> Auditorium for events and assemblies</li>
+                    <li><i class="fas fa-check"></i> Cafeteria with nutritious meals</li>
                 </ul>
             </div>
         </div>
     </section>
     
     <!-- Call to Action -->
-    <section class="section" style="background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; text-align: center;">
+    <section class="section">
         <div class="container">
-            <h2 style="font-size: 2.5rem; margin-bottom: 1rem;">Join Our Community</h2>
-            <p style="font-size: 1.25rem; margin-bottom: 2rem; opacity: 0.95;">
-                Discover how we can help your child reach their full potential
-            </p>
-            <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
-                <a href="<?php echo BASE_URL; ?>/public/admissions.php" class="btn" style="background: white; color: var(--primary);">
-                    Apply for Admission
-                </a>
-                <a href="<?php echo BASE_URL; ?>/public/contact.php" class="btn btn-outline">
-                    Contact Us
-                </a>
+            <div class="cta-section">
+                <h2>Join Our Community</h2>
+                <p>Discover how we can help your child reach their full potential</p>
+                <div class="cta-buttons">
+                    <a href="<?php echo BASE_URL; ?>/public/admissions.php" class="btn" style="background: white; color: var(--primary);">
+                        Apply for Admission
+                    </a>
+                    <a href="<?php echo BASE_URL; ?>/public/contact.php" class="btn btn-outline">
+                        Contact Us
+                    </a>
+                </div>
             </div>
         </div>
     </section>

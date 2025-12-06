@@ -120,9 +120,9 @@ $classTeacherSections = $teacherModel->getClassTeacherSections($teacherId);
                                 <tbody>
                                     <?php foreach ($teacher['subjects'] as $subject): ?>
                                         <tr>
-                                            <td><?php echo htmlspecialchars($subject['subject_name']); ?></td>
-                                            <td><?php echo htmlspecialchars($subject['class_name']); ?></td>
-                                            <td><?php echo htmlspecialchars($subject['subject_code']); ?></td>
+                                            <td><?php echo htmlspecialchars($subject['subject_name'] ?? ''); ?></td>
+                                            <td><?php echo htmlspecialchars($subject['class_name'] ?? 'All Classes'); ?></td>
+                                            <td><?php echo htmlspecialchars($subject['subject_code'] ?? ''); ?></td>
                                         </tr>
                                     <?php endforeach; ?>
                                 </tbody>

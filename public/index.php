@@ -29,37 +29,10 @@ $totalClasses = $classModel->getTotalCount();
     <meta name="description" content="Welcome to our School Management System - Building Future Leaders Through Quality Education">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="<?php echo BASE_URL; ?>/public/css/style.css">
+    <link rel="stylesheet" href="<?php echo BASE_URL; ?>/public/css/style.css?v=<?php echo time(); ?>">
 </head>
 <body>
-    <!-- Header -->
-    <header class="site-header">
-        <div class="container">
-            <div class="header-content">
-                <div class="site-logo">
-                    <h1><?php echo SITE_NAME; ?></h1>
-                    <p>Excellence in Education</p>
-                </div>
-                
-                <nav class="main-nav">
-                    <ul>
-                        <li><a href="<?php echo BASE_URL; ?>/public/index.php">Home</a></li>
-                        <li><a href="<?php echo BASE_URL; ?>/public/about.php">About</a></li>
-                        <li><a href="<?php echo BASE_URL; ?>/public/academics.php">Academics</a></li>
-                        <li><a href="<?php echo BASE_URL; ?>/public/admissions.php">Admissions</a></li>
-                        <li><a href="<?php echo BASE_URL; ?>/public/events.php">Events</a></li>
-                        <li><a href="<?php echo BASE_URL; ?>/public/gallery.php">Gallery</a></li>
-                        <li><a href="<?php echo BASE_URL; ?>/public/notices.php">Notices</a></li>
-                        <li><a href="<?php echo BASE_URL; ?>/public/contact.php">Contact</a></li>
-                    </ul>
-                </nav>
-                
-                <a href="<?php echo BASE_URL; ?>/login.php" class="login-btn">
-                    <i class="fas fa-sign-in-alt"></i> Login
-                </a>
-            </div>
-        </div>
-    </header>
+    <?php require_once __DIR__ . '/../includes/public_header.php'; ?>
     
     <!-- Hero Section -->
     <section class="hero">

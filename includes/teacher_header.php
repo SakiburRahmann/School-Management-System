@@ -22,11 +22,18 @@ $teacherInfo = $currentUser['related_info'] ?? null;
 </head>
 <body>
     <div class="admin-wrapper">
+        <!-- Sidebar Overlay (for mobile) -->
+        <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+        
         <!-- Sidebar -->
-        <aside class="sidebar">
+        <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
                 <h2>Teacher Portal</h2>
                 <p><?php echo htmlspecialchars($teacherInfo['name'] ?? 'Teacher'); ?></p>
+                <!-- Close button for mobile -->
+                <button class="sidebar-close" onclick="toggleSidebar()" aria-label="Close menu">
+                    <i class="fas fa-times"></i>
+                </button>
             </div>
             
             <nav class="sidebar-menu">
@@ -67,6 +74,12 @@ $teacherInfo = $currentUser['related_info'] ?? null;
             <!-- Header -->
             <header class="header">
                 <div class="header-left">
+                    <!-- Hamburger Menu Button (visible on mobile) -->
+                    <button class="hamburger-menu" id="hamburgerBtn" onclick="toggleSidebar()" aria-label="Toggle menu">
+                        <span class="hamburger-line"></span>
+                        <span class="hamburger-line"></span>
+                        <span class="hamburger-line"></span>
+                    </button>
                     <h1><?php echo $pageTitle ?? 'Dashboard'; ?></h1>
                 </div>
                 
@@ -83,6 +96,42 @@ $teacherInfo = $currentUser['related_info'] ?? null;
                 </div>
             </header>
             
+            <script>
+            // Sidebar toggle functionality
+            function toggleSidebar() {
+                const sidebar = document.getElementById('sidebar');
+                const overlay = document.getElementById('sidebarOverlay');
+                const hamburger = document.getElementById('hamburgerBtn');
+                
+                sidebar.classList.toggle('active');
+                overlay.classList.toggle('active');
+                hamburger.classList.toggle('active');
+                
+                if (sidebar.classList.contains('active')) {
+                    document.body.style.overflow = 'hidden';
+                } else {
+                    document.body.style.overflow = '';
+                }
+            }
+            
+            document.querySelectorAll('.sidebar .menu-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    if (window.innerWidth < 1024) {
+                        toggleSidebar();
+                    }
+                });
+            });
+            
+            window.addEventListener('resize', function() {
+                if (window.innerWidth >= 1024) {
+                    document.getElementById('sidebar').classList.remove('active');
+                    document.getElementById('sidebarOverlay').classList.remove('active');
+                    document.getElementById('hamburgerBtn').classList.remove('active');
+                    document.body.style.overflow = '';
+                }
+            });
+            </script>
+            
             <!-- Content Area -->
             <div class="content">
                 <?php if ($flash = getFlash()): ?>
@@ -90,3 +139,4 @@ $teacherInfo = $currentUser['related_info'] ?? null;
                         <?php echo $flash['message']; ?>
                     </div>
                 <?php endif; ?>
+

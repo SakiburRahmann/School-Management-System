@@ -25,26 +25,27 @@ class Teacher extends BaseModel {
     }
     
     /**
-     * Get teacher with assigned subjects
-     */
-    public function getWithSubjects($teacherId) {
-        $teacher = $this->find($teacherId);
+ * Get teacher with assigned subjects
+ */
+public function getWithSubjects($teacherId) {
+    $teacher = $this->find($teacherId);
+    
+    if ($teacher) {
+        // Use subject_teachers junction table for multi-teacher support
+        $sql = "SELECT sub.*, c.class_name 
+                FROM subjects sub
+                INNER JOIN subject_teachers st ON sub.subject_id = st.subject_id
+                LEFT JOIN classes c ON sub.class_id = c.class_id
+                WHERE st.teacher_id = :teacher_id
+                ORDER BY c.class_name, sub.subject_name";
         
-        if ($teacher) {
-            $sql = "SELECT sub.*, c.class_name 
-                    FROM subjects sub
-                    LEFT JOIN classes c ON sub.class_id = c.class_id
-                    WHERE sub.teacher_id = :teacher_id
-                    ORDER BY c.class_name, sub.subject_name";
-            
-            $stmt = $this->db->prepare($sql);
-            $stmt->execute(['teacher_id' => $teacherId]);
-            $teacher['subjects'] = $stmt->fetchAll();
-        }
-        
-        return $teacher;
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute(['teacher_id' => $teacherId]);
+        $teacher['subjects'] = $stmt->fetchAll();
     }
     
+    return $teacher;
+}    
     /**
      * Get teacher's assigned classes
      */

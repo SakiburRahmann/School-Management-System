@@ -185,15 +185,25 @@ setTimeout(function() {
                         <?php if (!empty($classDetails['sections'])): ?>
                             <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1rem;">
                                 <?php foreach ($classDetails['sections'] as $section): ?>
-                                    <div data-section-name="<?php echo htmlspecialchars($section['section_name']); ?>" style="background: var(--light); padding: 1rem; border-radius: 8px;">
+                                    <div data-section-name="<?php echo htmlspecialchars($section['section_name']); ?>" style="background: var(--light); padding: 1rem; border-radius: 8px; transition: all 0.2s ease;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.1)';" onmouseout="this.style.transform=''; this.style.boxShadow='';">
                                         <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.5rem;">
                                             <strong style="font-size: 1.1rem;">Section <?php echo htmlspecialchars($section['section_name']); ?></strong>
-                                            <a href="<?php echo BASE_URL; ?>/admin/classes/delete_section.php?id=<?php echo $section['section_id']; ?>" 
-                                               class="btn btn-danger btn-sm delete-btn"
-                                               data-delete-url="<?php echo BASE_URL; ?>/admin/classes/delete_section.php?id=<?php echo $section['section_id']; ?>"
-                                               data-delete-message="Are you sure you want to delete Section '<?php echo htmlspecialchars($section['section_name']); ?>' from <?php echo htmlspecialchars($class['class_name']); ?>?">
-                                                <i class="fas fa-trash"></i>
-                                            </a>
+                                            <div style="display: flex; gap: 0.25rem;">
+                                                <a href="<?php echo BASE_URL; ?>/admin/classes/view_section.php?id=<?php echo $section['section_id']; ?>" 
+                                                   class="btn btn-info btn-sm" title="View Details" style="padding: 0.25rem 0.5rem;">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                <a href="<?php echo BASE_URL; ?>/admin/classes/edit_section.php?id=<?php echo $section['section_id']; ?>" 
+                                                   class="btn btn-warning btn-sm" title="Edit" style="padding: 0.25rem 0.5rem;">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                                <a href="<?php echo BASE_URL; ?>/admin/classes/delete_section.php?id=<?php echo $section['section_id']; ?>" 
+                                                   class="btn btn-danger btn-sm delete-btn" title="Delete" style="padding: 0.25rem 0.5rem;"
+                                                   data-delete-url="<?php echo BASE_URL; ?>/admin/classes/delete_section.php?id=<?php echo $section['section_id']; ?>"
+                                                   data-delete-message="Are you sure you want to delete Section '<?php echo htmlspecialchars($section['section_name']); ?>' from <?php echo htmlspecialchars($class['class_name']); ?>?">
+                                                    <i class="fas fa-trash"></i>
+                                                </a>
+                                            </div>
                                         </div>
                                         <p style="margin: 0; color: #666; font-size: 0.9rem;">
                                             <i class="fas fa-user"></i> 

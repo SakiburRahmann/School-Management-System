@@ -560,28 +560,428 @@ textarea.form-control {
     }
 }
 
-/* Responsive */
-@media (max-width: 768px) {
-    .sidebar {
-        transform: translateX(-100%);
+/* ==========================================
+   RESPONSIVE DESIGN
+   ========================================== */
+
+/* Hamburger Menu */
+.hamburger-menu {
+    display: none;
+    flex-direction: column;
+    justify-content: space-around;
+    width: 28px;
+    height: 24px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    margin-right: 1rem;
+    z-index: 10;
+}
+
+.hamburger-line {
+    width: 100%;
+    height: 3px;
+    background: var(--primary);
+    border-radius: 2px;
+    transition: all 0.3s ease;
+    transform-origin: center;
+}
+
+.hamburger-menu.active .hamburger-line:nth-child(1) {
+    transform: rotate(45deg) translate(6px, 6px);
+}
+
+.hamburger-menu.active .hamburger-line:nth-child(2) {
+    opacity: 0;
+}
+
+.hamburger-menu.active .hamburger-line:nth-child(3) {
+    transform: rotate(-45deg) translate(6px, -6px);
+}
+
+/* Sidebar Overlay */
+.sidebar-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+    opacity: 0;
+    pointer-events: none;
+    /* Don't block clicks when invisible */
+    transition: opacity 0.3s ease;
+}
+
+.sidebar-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+    /* Block clicks when visible */
+}
+
+/* Sidebar Close Button */
+.sidebar-close {
+    display: none;
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    width: 36px;
+    height: 36px;
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    border-radius: 8px;
+    color: white;
+    font-size: 1.25rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.sidebar-close:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+/* ==========================================
+   TABLET BREAKPOINT (768px - 1023px)
+   ========================================== */
+@media (max-width: 1023px) and (min-width: 768px) {
+    :root {
+        --sidebar-width: 220px;
     }
 
+    .sidebar {
+        width: var(--sidebar-width);
+    }
+
+    .main-content {
+        margin-left: var(--sidebar-width);
+    }
+
+    .content {
+        padding: 1.5rem;
+    }
+
+    .header {
+        padding: 0 1.5rem;
+    }
+
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .card-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+
+    .card-header>*:not(h3) {
+        width: 100%;
+    }
+
+    /* Better table handling */
+    table th,
+    table td {
+        padding: 0.75rem;
+        font-size: 0.875rem;
+    }
+}
+
+/* ==========================================
+   MOBILE BREAKPOINT (< 768px)
+   ========================================== */
+@media (max-width: 767px) {
+
+    /* Show hamburger menu */
+    .hamburger-menu {
+        display: flex;
+    }
+
+    /* Show sidebar overlay */
+    .sidebar-overlay {
+        display: block;
+    }
+
+    /* Sidebar: hidden by default, slide in when active */
+    .sidebar {
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+        z-index: 1001;
+    }
+
+    .sidebar.active {
+        transform: translateX(0);
+    }
+
+    /* Show close button in sidebar */
+    .sidebar-close {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .sidebar-header {
+        padding-right: 3.5rem;
+    }
+
+    /* Main content full width */
     .main-content {
         margin-left: 0;
     }
 
-    .stats-grid {
-        grid-template-columns: 1fr;
+    /* Header adjustments */
+    .header {
+        padding: 0 1rem;
+        height: auto;
+        min-height: var(--header-height);
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        padding-top: 0.75rem;
+        padding-bottom: 0.75rem;
     }
 
+    .header-left {
+        display: flex;
+        align-items: center;
+        flex: 1;
+    }
+
+    .header-left h1 {
+        font-size: 1.125rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .header-right {
+        flex-shrink: 0;
+    }
+
+    .user-details {
+        display: none;
+    }
+
+    .user-avatar {
+        width: 36px;
+        height: 36px;
+        font-size: 0.875rem;
+    }
+
+    /* Content padding */
+    .content {
+        padding: 1rem;
+    }
+
+    /* Stats grid single column */
+    .stats-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .stat-card {
+        padding: 1rem;
+    }
+
+    .stat-value {
+        font-size: 1.5rem;
+    }
+
+    /* Card adjustments */
+    .card {
+        border-radius: 10px;
+        margin-bottom: 1rem;
+    }
+
+    .card-header {
+        padding: 1rem;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.75rem;
+    }
+
+    .card-header h3 {
+        font-size: 1rem;
+    }
+
+    .card-header>*:not(h3) {
+        width: 100%;
+    }
+
+    .card-body {
+        padding: 1rem;
+    }
+
+    /* Table responsiveness */
+    .table-responsive {
+        margin: -1rem;
+        padding: 0;
+        border-radius: 0;
+    }
+
+    table {
+        min-width: 600px;
+    }
+
+    table th,
+    table td {
+        padding: 0.75rem 0.5rem;
+        font-size: 0.8125rem;
+    }
+
+    /* Form adjustments */
+    .form-group {
+        margin-bottom: 1rem;
+    }
+
+    .form-control {
+        padding: 0.875rem;
+        font-size: 16px;
+        /* Prevents zoom on iOS */
+    }
+
+    /* Buttons: larger touch targets */
+    .btn {
+        padding: 0.75rem 1rem;
+        min-height: 44px;
+        font-size: 0.875rem;
+    }
+
+    .btn-sm {
+        padding: 0.5rem 0.75rem;
+        min-height: 36px;
+    }
+
+    /* Toast positioning */
     .toast-container {
-        left: 20px;
-        right: 20px;
+        left: 10px;
+        right: 10px;
+        top: 10px;
     }
 
     .toast {
         min-width: auto;
         max-width: none;
+    }
+
+    /* Pagination */
+    .pagination {
+        flex-wrap: wrap;
+    }
+
+    .pagination a,
+    .pagination span {
+        min-width: 40px;
+        min-height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* Modal adjustments */
+    .confirm-modal {
+        width: 95%;
+        max-width: none;
+        padding: 1.5rem;
+        margin: 1rem;
+    }
+
+    .confirm-modal-actions {
+        flex-direction: column;
+    }
+
+    .confirm-modal-btn {
+        width: 100%;
+    }
+
+    /* Grid layouts to single column */
+    [style*="grid-template-columns: 1fr 1fr"],
+    [style*="grid-template-columns: 1fr 2fr"],
+    [style*="grid-template-columns: repeat(2"] {
+        display: block !important;
+    }
+
+    [style*="grid-template-columns: 1fr 1fr"]>*,
+    [style*="grid-template-columns: 1fr 2fr"]>*,
+    [style*="grid-template-columns: repeat(2"]>* {
+        margin-bottom: 1rem;
+    }
+}
+
+/* ==========================================
+   EXTRA SMALL SCREENS (< 375px)
+   ========================================== */
+@media (max-width: 374px) {
+    .header-left h1 {
+        font-size: 1rem;
+        max-width: 150px;
+    }
+
+    .content {
+        padding: 0.75rem;
+    }
+
+    .btn {
+        padding: 0.625rem 0.875rem;
+        font-size: 0.8125rem;
+    }
+}
+
+/* ==========================================
+   TOUCH-FRIENDLY IMPROVEMENTS
+   ========================================== */
+@media (hover: none) and (pointer: coarse) {
+
+    /* Larger touch targets */
+    .menu-item {
+        padding: 1rem 1.5rem;
+        min-height: 48px;
+    }
+
+    .btn {
+        min-height: 44px;
+    }
+
+    .form-control {
+        min-height: 48px;
+    }
+
+    select.form-control {
+        min-height: 48px;
+    }
+
+    /* Remove hover effects that don't make sense on touch */
+    .stat-card:hover,
+    .card:hover {
+        transform: none;
+    }
+}
+
+/* ==========================================
+   PRINT STYLES
+   ========================================== */
+@media print {
+
+    .sidebar,
+    .header,
+    .hamburger-menu,
+    .sidebar-overlay,
+    .toast-container {
+        display: none !important;
+    }
+
+    .main-content {
+        margin-left: 0 !important;
+    }
+
+    .content {
+        padding: 0 !important;
+    }
+
+    .card {
+        box-shadow: none !important;
+        border: 1px solid #ddd;
     }
 }
 

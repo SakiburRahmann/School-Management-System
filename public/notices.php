@@ -18,37 +18,10 @@ $notices = $noticeModel->getPublicNotices();
     <title>Notices - <?php echo SITE_NAME; ?></title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="<?php echo BASE_URL; ?>/public/css/style.css">
+    <link rel="stylesheet" href="<?php echo BASE_URL; ?>/public/css/style.css?v=<?php echo time(); ?>">
 </head>
 <body>
-    <!-- Header -->
-    <header class="site-header">
-        <div class="container">
-            <div class="header-content">
-                <div class="site-logo">
-                    <h1><?php echo SITE_NAME; ?></h1>
-                    <p>Excellence in Education</p>
-                </div>
-                
-                <nav class="main-nav">
-                    <ul>
-                        <li><a href="<?php echo BASE_URL; ?>/public/index.php">Home</a></li>
-                        <li><a href="<?php echo BASE_URL; ?>/public/about.php">About</a></li>
-                        <li><a href="<?php echo BASE_URL; ?>/public/academics.php">Academics</a></li>
-                        <li><a href="<?php echo BASE_URL; ?>/public/admissions.php">Admissions</a></li>
-                        <li><a href="<?php echo BASE_URL; ?>/public/events.php">Events</a></li>
-                        <li><a href="<?php echo BASE_URL; ?>/public/gallery.php">Gallery</a></li>
-                        <li><a href="<?php echo BASE_URL; ?>/public/notices.php" style="opacity: 1; font-weight: 600;">Notices</a></li>
-                        <li><a href="<?php echo BASE_URL; ?>/public/contact.php">Contact</a></li>
-                    </ul>
-                </nav>
-                
-                <a href="<?php echo BASE_URL; ?>/login.php" class="login-btn">
-                    <i class="fas fa-sign-in-alt"></i> Login
-                </a>
-            </div>
-        </div>
-    </header>
+    <?php require_once __DIR__ . '/../includes/public_header.php'; ?>
     
     <!-- Page Header -->
     <section class="hero" style="padding: 4rem 0;">
@@ -62,37 +35,33 @@ $notices = $noticeModel->getPublicNotices();
     <section class="section">
         <div class="container">
             <?php if (!empty($notices)): ?>
-                <div style="max-width: 900px; margin: 0 auto; display: flex; flex-direction: column; gap: 1.5rem;">
+                <div class="notice-list">
                     <?php foreach ($notices as $notice): ?>
-                        <div class="card">
-                            <div class="card-content">
-                                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
-                                    <h3 style="margin: 0; color: var(--primary); flex: 1;">
-                                        <?php echo htmlspecialchars($notice['title']); ?>
-                                    </h3>
-                                    <?php if ($notice['priority'] === 'High'): ?>
-                                        <span style="background: var(--danger); color: white; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.875rem; font-weight: 600;">
-                                            <i class="fas fa-exclamation-circle"></i> Important
-                                        </span>
-                                    <?php endif; ?>
-                                </div>
-                                
-                                <p style="margin: 0 0 1rem 0; color: #666; line-height: 1.8; white-space: pre-line;">
-                                    <?php echo htmlspecialchars($notice['content']); ?>
-                                </p>
-                                
-                                <div class="card-meta">
-                                    <span><i class="fas fa-calendar"></i> <?php echo formatDate($notice['created_at']); ?></span>
-                                    <span><i class="fas fa-user"></i> <?php echo htmlspecialchars($notice['created_by_name'] ?? 'Administration'); ?></span>
-                                </div>
+                        <div class="notice-card <?php echo $notice['priority'] === 'High' ? 'priority-high' : ''; ?>">
+                            <div class="notice-header">
+                                <h3><?php echo htmlspecialchars($notice['title']); ?></h3>
+                                <?php if ($notice['priority'] === 'High'): ?>
+                                    <span class="priority-badge">
+                                        <i class="fas fa-exclamation-circle"></i> Important
+                                    </span>
+                                <?php endif; ?>
+                            </div>
+                            
+                            <p class="notice-content">
+                                <?php echo htmlspecialchars($notice['content']); ?>
+                            </p>
+                            
+                            <div class="card-meta">
+                                <span><i class="fas fa-calendar"></i> <?php echo formatDate($notice['created_at']); ?></span>
+                                <span><i class="fas fa-user"></i> <?php echo htmlspecialchars($notice['created_by_name'] ?? 'Administration'); ?></span>
                             </div>
                         </div>
                     <?php endforeach; ?>
                 </div>
             <?php else: ?>
-                <div style="text-align: center; padding: 4rem 0;">
-                    <i class="fas fa-inbox" style="font-size: 4rem; color: #ccc; margin-bottom: 1rem;"></i>
-                    <p style="font-size: 1.25rem; color: #999;">No notices available at the moment.</p>
+                <div class="empty-state">
+                    <i class="fas fa-inbox"></i>
+                    <p>No notices available at the moment.</p>
                 </div>
             <?php endif; ?>
         </div>
