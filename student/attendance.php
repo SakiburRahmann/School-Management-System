@@ -14,7 +14,7 @@ $endDate = $_GET['end_date'] ?? date('Y-m-d');
 $startDate = $_GET['start_date'] ?? date('Y-m-d', strtotime('-30 days'));
 
 // Get attendance history
-$attendanceHistory = $attendanceModel->getStudentHistory($studentId, $startDate, $endDate);
+$attendanceHistory = $attendanceModel->getStudentAttendance($studentId, $startDate, $endDate);
 
 // Get attendance percentage
 $attendancePercentage = $attendanceModel->getAttendancePercentage($studentId, $startDate, $endDate);
@@ -24,6 +24,7 @@ $totalDays = count($attendanceHistory);
 $presentDays = count(array_filter($attendanceHistory, fn($a) => $a['status'] === 'Present'));
 $absentDays = count(array_filter($attendanceHistory, fn($a) => $a['status'] === 'Absent'));
 $lateDays = count(array_filter($attendanceHistory, fn($a) => $a['status'] === 'Late'));
+$excusedDays = count(array_filter($attendanceHistory, fn($a) => $a['status'] === 'Excused'));
 ?>
 
 <!-- Statistics -->
@@ -63,27 +64,26 @@ $lateDays = count(array_filter($attendanceHistory, fn($a) => $a['status'] === 'L
 
 <div class="card">
     <div class="card-header">
-        <h3>Attendance History</h3>
+        <h3><i class="fas fa-history"></i> Attendance History</h3>
     </div>
     <div class="card-body">
         <!-- Date Range Filter -->
-        <form method="GET" style="margin-bottom: 1.5rem;">
-            <div style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 1rem;">
-                <div class="form-group">
+        <form method="GET" style="margin-bottom: 1.5rem; background: #f8f9fa; padding: 1.5rem; border-radius: 8px;">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; align-items: end;">
+                <div class="form-group" style="margin-bottom: 0;">
                     <label for="start_date">Start Date</label>
                     <input type="date" id="start_date" name="start_date" class="form-control" 
                            value="<?php echo $startDate; ?>">
                 </div>
                 
-                <div class="form-group">
+                <div class="form-group" style="margin-bottom: 0;">
                     <label for="end_date">End Date</label>
                     <input type="date" id="end_date" name="end_date" class="form-control" 
                            value="<?php echo $endDate; ?>">
                 </div>
                 
-                <div class="form-group">
-                    <label>&nbsp;</label>
-                    <button type="submit" class="btn btn-primary">
+                <div class="form-group" style="margin-bottom: 0;">
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">
                         <i class="fas fa-search"></i> Filter
                     </button>
                 </div>
@@ -92,19 +92,20 @@ $lateDays = count(array_filter($attendanceHistory, fn($a) => $a['status'] === 'L
         
         <!-- Attendance Table -->
         <div class="table-responsive">
-            <table>
+            <table class="table table-bordered table-striped">
                 <thead>
                     <tr>
                         <th>Date</th>
                         <th>Day</th>
                         <th>Status</th>
+                        <th>Remarks</th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php if (!empty($attendanceHistory)): ?>
                         <?php foreach ($attendanceHistory as $record): ?>
                             <tr>
-                                <td><?php echo formatDate($record['date']); ?></td>
+                                <td><?php echo date('d M, Y', strtotime($record['date'])); ?></td>
                                 <td><?php echo date('l', strtotime($record['date'])); ?></td>
                                 <td>
                                     <?php
@@ -112,6 +113,7 @@ $lateDays = count(array_filter($attendanceHistory, fn($a) => $a['status'] === 'L
                                         'Present' => 'success',
                                         'Absent' => 'danger',
                                         'Late' => 'warning',
+                                        'Excused' => 'info',
                                         default => 'secondary'
                                     };
                                     ?>
@@ -119,11 +121,12 @@ $lateDays = count(array_filter($attendanceHistory, fn($a) => $a['status'] === 'L
                                         <?php echo $record['status']; ?>
                                     </span>
                                 </td>
+                                <td><?php echo htmlspecialchars($record['remarks'] ?? '-'); ?></td>
                             </tr>
                         <?php endforeach; ?>
                     <?php else: ?>
                         <tr>
-                            <td colspan="3" style="text-align: center; padding: 2rem;">
+                            <td colspan="4" style="text-align: center; padding: 2rem; color: #999;">
                                 No attendance records found for the selected period.
                             </td>
                         </tr>

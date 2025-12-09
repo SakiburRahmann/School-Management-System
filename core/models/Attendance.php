@@ -164,4 +164,123 @@ class Attendance extends BaseModel {
         
         return 0;
     }
+    /**
+     * Bulk mark attendance
+     */
+    public function bulkMark($attendanceData) {
+        $successCount = 0;
+        $errorCount = 0;
+        
+        foreach ($attendanceData as $record) {
+            $studentId = $record['student_id'];
+            $date = $record['date'];
+            $status = $record['status'];
+            $remarks = $record['remarks'] ?? null;
+            $sectionId = $record['section_id'];
+            $createdBy = $record['created_by'] ?? null;
+            
+            // Check if exists
+            $existing = $this->getAttendance($studentId, $date);
+            
+            if ($existing) {
+                // Update if status changed
+                if ($existing['status'] !== $status || $existing['remarks'] !== $remarks) {
+                    $updateData = [
+                        'status' => $status,
+                        'remarks' => $remarks
+                    ];
+                    
+                    if ($this->update($existing['attendance_id'], $updateData)) {
+                        // Log change
+                        // $this->logChange($existing['attendance_id'], 'Update', 
+                        //     "Status: {$existing['status']}", "Status: {$status}", $createdBy);
+                        $successCount++;
+                    } else {
+                        $errorCount++;
+                    }
+                }
+            } else {
+                // Create new
+                $data = [
+                    'student_id' => $studentId,
+                    'date' => $date,
+                    'status' => $status,
+                    'remarks' => $remarks
+                ];
+                
+                $id = $this->create($data);
+                if ($id) {
+                    // $this->logChange($id, 'Create', null, "Status: {$status}", $createdBy);
+                    $successCount++;
+                } else {
+                    $errorCount++;
+                }
+            }
+        }
+        
+        return ['success' => $successCount, 'errors' => $errorCount];
+    }
+    
+    /**
+     * Log attendance change
+     */
+    private function logChange($attendanceId, $action, $from, $to, $userId) {
+        // Logging disabled temporarily to prevent errors if table missing
+        /*
+        $sql = "INSERT INTO attendance_logs (attendance_id, action, changed_from, changed_to, changed_by)
+                VALUES (:attendance_id, :action, :changed_from, :changed_to, :changed_by)";
+        
+        $this->query($sql, [
+            'attendance_id' => $attendanceId,
+            'action' => $action,
+            'changed_from' => $from,
+            'changed_to' => $to,
+            'changed_by' => $userId
+        ]);
+        */
+    }
+
+    /**
+     * Get student attendance stats
+     */
+    public function getStudentStats($studentId) {
+        $sql = "SELECT 
+                COUNT(*) as total_days,
+                SUM(CASE WHEN status = 'Present' THEN 1 ELSE 0 END) as present,
+                SUM(CASE WHEN status = 'Absent' THEN 1 ELSE 0 END) as absent,
+                SUM(CASE WHEN status = 'Late' THEN 1 ELSE 0 END) as late,
+                SUM(CASE WHEN status = 'Excused' THEN 1 ELSE 0 END) as excused
+                FROM {$this->table}
+                WHERE student_id = :student_id";
+        
+        $stats = $this->queryOne($sql, ['student_id' => $studentId]);
+        
+        if ($stats['total_days'] > 0) {
+            $stats['percentage'] = round(($stats['present'] / $stats['total_days']) * 100, 1);
+        } else {
+            $stats['percentage'] = 0;
+        }
+        
+        return $stats;
+    }
+
+    /**
+     * Get detailed monthly attendance for class
+     */
+    public function getMonthlyAttendance($classId, $sectionId, $month, $year) {
+        $sql = "SELECT a.*, s.student_id 
+                FROM {$this->table} a
+                JOIN students s ON a.student_id = s.student_id
+                WHERE s.class_id = :class_id 
+                AND s.section_id = :section_id
+                AND MONTH(a.date) = :month 
+                AND YEAR(a.date) = :year";
+        
+        return $this->query($sql, [
+            'class_id' => $classId,
+            'section_id' => $sectionId,
+            'month' => $month,
+            'year' => $year
+        ]);
+    }
 }
