@@ -31,7 +31,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     if (verifyCSRFToken($_POST['csrf_token'])) {
         $formData = [
             'subject_name' => sanitize($_POST['subject_name'] ?? ''),
-            'subject_code' => strtoupper(sanitize($_POST['subject_code'] ?? '')),
             'description' => sanitize($_POST['description'] ?? ''),
             'credits_hours' => (int)($_POST['credits_hours'] ?? 0),
             'subject_type' => sanitize($_POST['subject_type'] ?? 'Core'),
@@ -44,12 +43,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             $errors[] = 'Subject name is required.';
         } elseif ($subjectModel->subjectNameExists($formData['subject_name'])) {
             $errors[] = 'Subject name "' . $formData['subject_name'] . '" already exists. Please use a different name.';
-        }
-        
-        if (empty($formData['subject_code'])) {
-            $errors[] = 'Subject code is required.';
-        } elseif ($subjectModel->subjectCodeExists($formData['subject_code'])) {
-            $errors[] = 'Subject code "' . $formData['subject_code'] . '" already exists. Please use a different code.';
         }
         
         // If no errors, create subject
@@ -342,13 +335,11 @@ $allClasses = $classModel->findAll('class_name');
                            value="<?php echo htmlspecialchars($formData['subject_name']); ?>">
                 </div>
                 
-                <!-- Subject Code -->
-                <div class="form-group">
-                    <label for="subject_code">Subject Code <span style="color: var(--danger);">*</span></label>
-                    <input type="text" id="subject_code" name="subject_code" class="form-control" 
-                           placeholder="e.g., MATH101" required style="text-transform: uppercase;"
-                           value="<?php echo htmlspecialchars($formData['subject_code']); ?>">
-                </div>
+                <!-- Subject Code (Auto-generated) -->
+                <!-- <div class="form-group">
+                    <label>Subject Code</label>
+                    <input type="text" class="form-control" value="Auto-generated" disabled style="background: #f9f9f9; color: #888;">
+                </div> -->
                 
                 <!-- Subject Type -->
                 <div class="form-group">

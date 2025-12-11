@@ -4,7 +4,7 @@
  */
 
 require_once __DIR__ . '/../../config.php';
-requireRole('Admin');
+requireRole(['Admin', 'Teacher']);
 
 header('Content-Type: application/json');
 

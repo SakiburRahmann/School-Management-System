@@ -201,6 +201,9 @@ $currentUser = (new User())->find(getUserId());
                         <div class="user-details">
                             <h4><?php echo htmlspecialchars($currentUser['username']); ?></h4>
                             <p><?php echo $currentUser['role']; ?></p>
+                            <a href="<?php echo BASE_URL; ?>/admin/profile.php" class="profile-link" title="Edit Profile">
+                                <i class="fas fa-cog"></i>
+                            </a>
                         </div>
                     </div>
                 </div>

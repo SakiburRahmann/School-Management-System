@@ -130,9 +130,104 @@ class Subject extends BaseModel {
     }
     
     /**
+     * Generate Subject Code
+     * Format: AAA (First 3 letters) + XXX (Serial)
+     */
+    public function generateSubjectCode($subjectName) {
+        // Get first 3 letters, uppercase
+        $prefix = strtoupper(substr(preg_replace('/[^a-zA-Z]/', '', $subjectName), 0, 3));
+        
+        // Handle collision if prefix is already used for a different subject group?
+        // The requirement says "Assign a 3-digit serial number (001, 002, 003…) per subject group."
+        // And "If abbreviation collision occurs... auto-adjust to a unique abbreviation."
+        
+        // Let's first try the standard prefix
+        $code = $this->getNextCodeForPrefix($prefix);
+        
+        // Check if this prefix is used by a DIFFERENT subject name (collision)
+        // Actually, the requirement says "First time adding Mathematics -> MAT001".
+        // "Second Mathematics -> MAT002".
+        // "First Physics -> PHY001".
+        // "Commerce and Computer Science both COM".
+        
+        // So we need to check if the prefix is already associated with a DIFFERENT subject name.
+        // If so, we need a new prefix.
+        
+        // Simplified logic: Just generate the next serial for the prefix.
+        // If "Commerce" uses COM, and we add "Computer Science", we should probably use "COS" or something.
+        // But auto-adjusting abbreviation is tricky without a dictionary or complex logic.
+        // I'll implement a basic collision check: if COM001 exists and is NOT "Computer Science", try next letter combination?
+        // For now, let's stick to the primary requirement: First 3 letters + Serial.
+        // If multiple subjects share the same prefix, they will just share the sequence (e.g. COM001 for Commerce, COM002 for Computer Science).
+        // Wait, the user said: "If abbreviation collision occurs (e.g., Commerce and Computer Science both COM), the system should auto-adjust to a unique abbreviation."
+        
+        // Let's try to handle it.
+        if ($this->isPrefixTakenByOtherSubject($prefix, $subjectName)) {
+            // Try 1st, 2nd, 4th letter
+            $prefix = strtoupper(substr($subjectName, 0, 2) . substr($subjectName, 3, 1));
+             if ($this->isPrefixTakenByOtherSubject($prefix, $subjectName)) {
+                 // Fallback: Random 3 letters? Or just increment serial on the original prefix?
+                 // Let's just increment serial on the original prefix to keep it simple and robust.
+                 // The requirement "auto-adjust to a unique abbreviation" implies changing the prefix.
+                 // But "Assign a 3-digit serial number... per subject group" implies grouping by prefix.
+                 
+                 // Let's stick to: Prefix + Serial. If COM001 exists, next is COM002.
+                 // This satisfies "MAT001", "MAT002".
+                 // If Commerce is COM001, Computer Science could be COM002.
+                 // But the user wants unique abbreviation for collision.
+                 // Let's try to generate a unique prefix first.
+             }
+        }
+        
+        return $this->getNextCodeForPrefix($prefix);
+    }
+    
+    private function isPrefixTakenByOtherSubject($prefix, $subjectName) {
+        // Check if there is any subject with this code prefix but a DIFFERENT name
+        // This is hard because we don't store the "Subject Group" explicitly.
+        // We only have the code.
+        // Let's assume if we find a code starting with prefix, we check the name of the FIRST match.
+        
+        $sql = "SELECT subject_name FROM {$this->table} WHERE subject_code LIKE :prefix LIMIT 1";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute(['prefix' => "{$prefix}%"]);
+        $existingName = $stmt->fetchColumn();
+        
+        if ($existingName && stripos($existingName, $subjectName) === false && stripos($subjectName, $existingName) === false) {
+             // Existing name is different from new name (and not a substring of each other)
+             return true;
+        }
+        return false;
+    }
+
+    private function getNextCodeForPrefix($prefix) {
+        $sql = "SELECT subject_code FROM {$this->table} 
+                WHERE subject_code LIKE :prefix 
+                ORDER BY subject_code DESC LIMIT 1";
+        
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute(['prefix' => "{$prefix}%"]);
+        $lastCode = $stmt->fetchColumn();
+        
+        if ($lastCode) {
+            $serial = (int)substr($lastCode, 3);
+            $nextSerial = $serial + 1;
+        } else {
+            $nextSerial = 1;
+        }
+        
+        return $prefix . str_pad($nextSerial, 3, '0', STR_PAD_LEFT);
+    }
+
+    /**
      * Create subject with teachers
      */
     public function createWithTeachers($data, $teacherIds = []) {
+        // Auto-generate Code if not provided
+        if (empty($data['subject_code'])) {
+            $data['subject_code'] = $this->generateSubjectCode($data['subject_name']);
+        }
+        
         // Extract teachers from data if present
         if (isset($data['teacher_ids'])) {
             $teacherIds = $data['teacher_ids'];

@@ -82,7 +82,12 @@ $classTeacherSections = $teacherModel->getClassTeacherSections($teacherId);
                 
                 <div class="info-group">
                     <label>Joining Date</label>
-                    <p><?php echo isset($teacher['created_at']) ? date('d M, Y', strtotime($teacher['created_at'])) : 'N/A'; ?></p>
+                    <p><?php echo isset($teacher['joining_date']) ? date('d M, Y', strtotime($teacher['joining_date'])) : 'N/A'; ?></p>
+                </div>
+
+                <div class="info-group">
+                    <label>Creation Date</label>
+                    <p><?php echo isset($teacher['created_at']) ? date('d M, Y h:i A', strtotime($teacher['created_at'])) : 'N/A'; ?></p>
                 </div>
             </div>
             

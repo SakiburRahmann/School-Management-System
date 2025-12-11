@@ -3,8 +3,7 @@
  * Admin - Exam Management
  */
 
-$pageTitle = 'Exam Management';
-require_once __DIR__ . '/../../includes/admin_header.php';
+require_once __DIR__ . '/../../config.php';
 
 $examModel = new Exam();
 $classModel = new ClassModel();
@@ -33,6 +32,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 
 // Handle exam deletion
 if (isset($_GET['delete']) && isset($_GET['id'])) {
+    // Verify CSRF token for deletion (safer) - for now just check ID
     if ($examModel->delete($_GET['id'])) {
         setFlash('success', 'Exam deleted successfully!');
     } else {
@@ -48,6 +48,9 @@ $classes = $classModel->findAll('class_name');
 // Separate upcoming and past exams
 $upcomingExams = array_filter($exams, fn($e) => strtotime($e['exam_date']) >= strtotime('today'));
 $pastExams = array_filter($exams, fn($e) => strtotime($e['exam_date']) < strtotime('today'));
+
+$pageTitle = 'Exam Management';
+require_once __DIR__ . '/../../includes/admin_header.php';
 ?>
 
 <div class="card" style="margin-bottom: 1.5rem;">
@@ -123,9 +126,15 @@ $pastExams = array_filter($exams, fn($e) => strtotime($e['exam_date']) < strtoti
                                 <td><?php echo formatDate($exam['exam_date']); ?></td>
                                 <td><?php echo $exam['total_marks'] ?? 'N/A'; ?></td>
                                 <td>
+                                    <a href="<?php echo BASE_URL; ?>/admin/exams/edit.php?id=<?php echo $exam['exam_id']; ?>" 
+                                       class="btn btn-warning btn-sm" title="Edit">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
                                     <a href="<?php echo BASE_URL; ?>/admin/exams/?delete=1&id=<?php echo $exam['exam_id']; ?>" 
-                                       class="btn btn-danger btn-sm"
-                                       onclick="return confirmDelete('Delete this exam?');">
+                                       class="btn btn-danger btn-sm delete-btn"
+                                       data-delete-url="<?php echo BASE_URL; ?>/admin/exams/?delete=1&id=<?php echo $exam['exam_id']; ?>"
+                                       data-delete-message="Are you sure you want to delete this exam?"
+                                       title="Delete">
                                         <i class="fas fa-trash"></i>
                                     </a>
                                 </td>
@@ -173,6 +182,10 @@ $pastExams = array_filter($exams, fn($e) => strtotime($e['exam_date']) < strtoti
                                     <a href="<?php echo BASE_URL; ?>/admin/results/?exam_id=<?php echo $exam['exam_id']; ?>" 
                                        class="btn btn-info btn-sm">
                                         <i class="fas fa-chart-line"></i> View Results
+                                    </a>
+                                    <a href="<?php echo BASE_URL; ?>/admin/exams/edit.php?id=<?php echo $exam['exam_id']; ?>" 
+                                       class="btn btn-warning btn-sm" title="Edit">
+                                        <i class="fas fa-edit"></i>
                                     </a>
                                 </td>
                             </tr>

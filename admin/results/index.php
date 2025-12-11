@@ -14,6 +14,14 @@ $resultModel = new Result();
 $selectedExam = $_GET['exam_id'] ?? '';
 $selectedClass = $_GET['class_id'] ?? '';
 
+// If exam is selected but class is not, try to get class from exam
+if ($selectedExam && !$selectedClass) {
+    $examDetails = $examModel->find($selectedExam);
+    if ($examDetails && isset($examDetails['class_id'])) {
+        $selectedClass = $examDetails['class_id'];
+    }
+}
+
 // Get all exams and classes for filter
 $exams = $examModel->getExamsWithDetails();
 $classes = $classModel->findAll('class_name');

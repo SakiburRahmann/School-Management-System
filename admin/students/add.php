@@ -20,12 +20,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         redirect(BASE_URL . '/admin/students/add.php');
     }
     
-    $studentIdCustom = trim(sanitize($_POST['student_id_custom']));
+    $admissionDate = $_POST['admission_date'];
     $name = trim(sanitize($_POST['name']));
     
     $data = [
         'name' => $name,
-        'student_id_custom' => $studentIdCustom,
+        'admission_date' => $admissionDate,
         'class_id' => $_POST['class_id'] ?: null,
         'section_id' => $_POST['section_id'] ?: null,
         'roll_number' => $_POST['roll_number'] ?: null,
@@ -42,10 +42,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errors['name'] = 'Student name is required.';
     }
     
-    if (empty($data['student_id_custom'])) {
-        $errors['student_id_custom'] = 'Student ID is required.';
-    } elseif ($studentModel->studentIdExists($data['student_id_custom'])) {
-        $errors['student_id_custom'] = 'This Student ID already exists. Please use a unique ID.';
+    if (empty($data['admission_date'])) {
+        $errors['admission_date'] = 'Admission Date is required.';
     }
     
     // Check if roll number exists (if provided)
@@ -66,22 +64,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $studentId = $studentModel->create($data);
     
     if ($studentId) {
-        // Create user account if requested
-        if (isset($_POST['create_account']) && $_POST['create_account'] == '1') {
-            $username = strtolower(str_replace(' ', '', $data['name'])) . $studentId;
-            $password = generatePassword();
-            
-            $userModel->createUser([
-                'username' => $username,
-                'password' => $password,
-                'role' => 'Student',
-                'related_id' => $studentId
-            ]);
-            
-            setFlash('success', "Student added successfully! Login: {$username} / {$password}");
-        } else {
-            setFlash('success', 'Student added successfully!');
-        }
+        // Automatically create user account
+        // Fetch the created student to get the generated ID
+        $student = $studentModel->find($studentId);
+        $username = $student['student_id_custom'];
+        $password = $username; // Password is same as ID
+        
+        $userModel->createUser([
+            'username' => $username,
+            'password' => $password,
+            'role' => 'Student',
+            'related_id' => $studentId
+        ]);
+        
+        setFlash('success', "Student added successfully! User account created. Login: {$username} / {$password}");
         
         redirect(BASE_URL . '/admin/students/');
     } else {
@@ -145,15 +141,13 @@ require_once __DIR__ . '/../../includes/admin_header.php';
                     </div>
                 </div>
 
-                <div class="form-group <?php echo isset($errors['student_id_custom']) ? 'has-error' : ''; ?>">
-                    <label for="student_id_custom">Student ID <span class="required-star">*</span></label>
-                    <input type="text" id="student_id_custom" name="student_id_custom" class="form-control" 
-                           value="<?php echo htmlspecialchars($formData['student_id_custom'] ?? ''); ?>"
-                           placeholder="e.g., S001, STU2024001" required>
-                    <div class="field-error" id="student_id_custom-error">
-                        <?php echo isset($errors['student_id_custom']) ? htmlspecialchars($errors['student_id_custom']) : ''; ?>
+                <div class="form-group <?php echo isset($errors['admission_date']) ? 'has-error' : ''; ?>">
+                    <label for="admission_date">Admission Date <span class="required-star">*</span></label>
+                    <input type="date" id="admission_date" name="admission_date" class="form-control" 
+                           value="<?php echo htmlspecialchars($formData['admission_date'] ?? date('Y-m-d')); ?>" required>
+                    <div class="field-error" id="admission_date-error">
+                        <?php echo isset($errors['admission_date']) ? htmlspecialchars($errors['admission_date']) : ''; ?>
                     </div>
-                    <small class="text-muted">Unique identifier for this student</small>
                 </div>
                 
                 <div class="form-group">
@@ -233,16 +227,9 @@ require_once __DIR__ . '/../../includes/admin_header.php';
                 </div>
             </div>
             
-            <h4 style="margin: 2rem 0 1rem; color: var(--primary);">User Account</h4>
-            
-            <div class="form-group">
-                <label class="checkbox-label">
-                    <input type="checkbox" name="create_account" value="1">
-                    <span>Create user account for student portal access</span>
-                </label>
-                <small style="display: block; margin-top: 0.5rem; color: #666;">
-                    If checked, a username and password will be automatically generated.
-                </small>
+            <!-- User Account (Automatic) -->
+            <div class="alert alert-info" style="margin-top: 2rem;">
+                <i class="fas fa-info-circle"></i> A user account will be automatically created with the Student ID as both username and password.
             </div>
             
             <div style="margin-top: 2rem; display: flex; gap: 1rem;">
@@ -294,7 +281,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('studentForm');
     const requiredFields = [
         { id: 'name', label: 'Full Name' },
-        { id: 'student_id_custom', label: 'Student ID' }
+        { id: 'admission_date', label: 'Admission Date' }
     ];
     
     // Real-time validation on input

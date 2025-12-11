@@ -19,12 +19,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         redirect(BASE_URL . '/admin/teachers/add.php');
     }
     
-    $teacherIdCustom = trim(sanitize($_POST['teacher_id_custom']));
+    $joiningDate = $_POST['joining_date'];
     $name = trim(sanitize($_POST['name']));
     
     $data = [
         'name' => $name,
-        'teacher_id_custom' => $teacherIdCustom,
+        'joining_date' => $joiningDate,
         'qualification' => sanitize($_POST['qualification']),
         'subject_speciality' => sanitize($_POST['subject_speciality']),
         'email' => sanitize($_POST['email']),
@@ -38,10 +38,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errors['name'] = 'Teacher name is required.';
     }
     
-    if (empty($data['teacher_id_custom'])) {
-        $errors['teacher_id_custom'] = 'Teacher ID is required.';
-    } elseif ($teacherModel->teacherIdExists($data['teacher_id_custom'])) {
-        $errors['teacher_id_custom'] = 'This Teacher ID already exists. Please use a unique ID.';
+    if (empty($data['joining_date'])) {
+        $errors['joining_date'] = 'Joining Date is required.';
     }
     
     if (!empty($errors)) {
@@ -54,22 +52,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $teacherId = $teacherModel->create($data);
     
     if ($teacherId) {
-        // Create user account if requested
-        if (isset($_POST['create_account']) && $_POST['create_account'] == '1') {
-            $username = strtolower(str_replace(' ', '', $data['name'])) . $teacherId;
-            $password = generatePassword();
-            
-            $userModel->createUser([
-                'username' => $username,
-                'password' => $password,
-                'role' => 'Teacher',
-                'related_id' => $teacherId
-            ]);
-            
-            setFlash('success', "Teacher added successfully! Login: {$username} / {$password}");
-        } else {
-            setFlash('success', 'Teacher added successfully!');
-        }
+        // Automatically create user account
+        // Fetch the created teacher to get the generated ID
+        $teacher = $teacherModel->find($teacherId);
+        $username = $teacher['teacher_id_custom'];
+        $password = $username; // Password is same as ID
+        
+        $userModel->createUser([
+            'username' => $username,
+            'password' => $password,
+            'role' => 'Teacher',
+            'related_id' => $teacherId
+        ]);
+        
+        setFlash('success', "Teacher added successfully! User account created. Login: {$username} / {$password}");
         
         redirect(BASE_URL . '/admin/teachers/');
     } else {
@@ -129,15 +125,13 @@ require_once __DIR__ . '/../../includes/admin_header.php';
                     </div>
                 </div>
 
-                <div class="form-group <?php echo isset($errors['teacher_id_custom']) ? 'has-error' : ''; ?>">
-                    <label for="teacher_id_custom">Teacher ID <span class="required-star">*</span></label>
-                    <input type="text" id="teacher_id_custom" name="teacher_id_custom" class="form-control" 
-                           value="<?php echo htmlspecialchars($formData['teacher_id_custom'] ?? ''); ?>"
-                           placeholder="e.g., T001, TCH2024001" required>
-                    <div class="field-error" id="teacher_id_custom-error">
-                        <?php echo isset($errors['teacher_id_custom']) ? htmlspecialchars($errors['teacher_id_custom']) : ''; ?>
+                <div class="form-group <?php echo isset($errors['joining_date']) ? 'has-error' : ''; ?>">
+                    <label for="joining_date">Joining Date <span class="required-star">*</span></label>
+                    <input type="date" id="joining_date" name="joining_date" class="form-control" 
+                           value="<?php echo htmlspecialchars($formData['joining_date'] ?? date('Y-m-d')); ?>" required>
+                    <div class="field-error" id="joining_date-error">
+                        <?php echo isset($errors['joining_date']) ? htmlspecialchars($errors['joining_date']) : ''; ?>
                     </div>
-                    <small class="text-muted">Unique identifier for this teacher</small>
                 </div>
 
                 <div class="form-group">
@@ -178,16 +172,9 @@ require_once __DIR__ . '/../../includes/admin_header.php';
                 <textarea id="address" name="address" class="form-control" rows="3"><?php echo htmlspecialchars($formData['address'] ?? ''); ?></textarea>
             </div>
             
-            <h4 style="margin: 2rem 0 1rem; color: var(--primary);">User Account</h4>
-            
-            <div class="form-group">
-                <label class="checkbox-label">
-                    <input type="checkbox" name="create_account" value="1">
-                    <span>Create user account for teacher portal access</span>
-                </label>
-                <small style="display: block; margin-top: 0.5rem; color: #666;">
-                    If checked, a username and password will be automatically generated.
-                </small>
+            <!-- User Account (Automatic) -->
+            <div class="alert alert-info" style="margin-top: 2rem;">
+                <i class="fas fa-info-circle"></i> A user account will be automatically created with the Teacher ID as both username and password.
             </div>
             
             <div style="margin-top: 2rem; display: flex; gap: 1rem;">
@@ -207,7 +194,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('teacherForm');
     const requiredFields = [
         { id: 'name', label: 'Full Name' },
-        { id: 'teacher_id_custom', label: 'Teacher ID' }
+        { id: 'joining_date', label: 'Joining Date' }
     ];
     
     // Real-time validation on input

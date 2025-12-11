@@ -148,4 +148,44 @@ public function getWithSubjects($teacherId) {
         
         return $this->query($sql, $params);
     }
+    /**
+     * Generate Teacher ID
+     * Format: TCH + YY + XXXXX (e.g., TCH2600001)
+     */
+    public function generateTeacherID($joiningDate) {
+        $year = date('y', strtotime($joiningDate)); // Last 2 digits of year
+        $prefix = "TCH{$year}";
+        
+        // Find the last ID with this prefix
+        $sql = "SELECT teacher_id_custom FROM {$this->table} 
+                WHERE teacher_id_custom LIKE :prefix 
+                ORDER BY teacher_id_custom DESC LIMIT 1";
+        
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute(['prefix' => "{$prefix}%"]);
+        $lastId = $stmt->fetchColumn();
+        
+        if ($lastId) {
+            // Extract serial number
+            $serial = (int)substr($lastId, 5);
+            $nextSerial = $serial + 1;
+        } else {
+            $nextSerial = 1;
+        }
+        
+        // Pad with zeros to 5 digits
+        return $prefix . str_pad($nextSerial, 5, '0', STR_PAD_LEFT);
+    }
+
+    /**
+     * Create new teacher
+     */
+    public function create($data) {
+        // Auto-generate ID if not provided (though it should always be generated now)
+        if (empty($data['teacher_id_custom']) && !empty($data['joining_date'])) {
+            $data['teacher_id_custom'] = $this->generateTeacherID($data['joining_date']);
+        }
+        
+        return parent::create($data);
+    }
 }

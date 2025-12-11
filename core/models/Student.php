@@ -182,4 +182,45 @@ class Student extends BaseModel {
     public function getCountByClass($classId) {
         return $this->count('class_id = :class_id', ['class_id' => $classId]);
     }
+    /**
+     * Generate Student ID
+     * Format: STD + YY + XXXXX (e.g., STD2600001)
+     */
+    public function generateStudentID($admissionDate = null) {
+        $admissionDate = $admissionDate ?? date('Y-m-d');
+        $year = date('y', strtotime($admissionDate)); // Last 2 digits of year
+        $prefix = "STD{$year}";
+        
+        // Find the last ID with this prefix
+        $sql = "SELECT student_id_custom FROM {$this->table} 
+                WHERE student_id_custom LIKE :prefix 
+                ORDER BY student_id_custom DESC LIMIT 1";
+        
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute(['prefix' => "{$prefix}%"]);
+        $lastId = $stmt->fetchColumn();
+        
+        if ($lastId) {
+            // Extract serial number
+            $serial = (int)substr($lastId, 5);
+            $nextSerial = $serial + 1;
+        } else {
+            $nextSerial = 1;
+        }
+        
+        // Pad with zeros to 5 digits
+        return $prefix . str_pad($nextSerial, 5, '0', STR_PAD_LEFT);
+    }
+
+    /**
+     * Create new student
+     */
+    public function create($data) {
+        // Auto-generate ID if not provided
+        if (empty($data['student_id_custom'])) {
+            $data['student_id_custom'] = $this->generateStudentID($data['admission_date'] ?? null);
+        }
+        
+        return parent::create($data);
+    }
 }
