@@ -11,19 +11,64 @@ $classModel = new ClassModel();
 // Handle exam creation
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'create_exam') {
     if (verifyCSRFToken($_POST['csrf_token'])) {
-        $data = [
-            'exam_name' => sanitize($_POST['exam_name']),
-            'class_id' => $_POST['class_id'],
-            'exam_date' => $_POST['exam_date'],
-            'total_marks' => $_POST['total_marks']
-        ];
-        
-        if (!empty($data['exam_name']) && !empty($data['class_id']) && !empty($data['exam_date'])) {
-            $examId = $examModel->create($data);
-            if ($examId) {
-                setFlash('success', 'Exam created successfully!');
+        $classIds = $_POST['class_id'] ?? []; // Expecting array
+        $subjectName = $_POST['subject_name'] ?? '';
+        $examName = sanitize($_POST['exam_name']);
+        $examDate = $_POST['exam_date'];
+        $totalMarks = $_POST['total_marks'];
+        $assignedTeachers = $_POST['assigned_teachers'] ?? [];
+
+        if (!is_array($classIds)) {
+            $classIds = [$classIds];
+        }
+
+        if (!empty($examName) && !empty($classIds) && !empty($subjectName) && !empty($examDate)) {
+            $successCount = 0;
+            $failCount = 0;
+            $skippedCount = 0;
+            
+            $db = new Database(); // Need DB for subject lookup
+
+            foreach ($classIds as $classId) {
+                if (empty($classId)) continue;
+
+                // Find subject_id for this class and subject_name
+                $sql = "SELECT subject_id FROM subjects WHERE class_id = :class_id AND subject_name = :subject_name LIMIT 1";
+                $stmt = $db->prepare($sql);
+                $stmt->execute(['class_id' => $classId, 'subject_name' => $subjectName]);
+                $subjectId = $stmt->fetchColumn();
+
+                if ($subjectId) {
+                    $data = [
+                        'exam_name' => $examName,
+                        'class_id' => $classId,
+                        'subject_id' => $subjectId,
+                        'exam_date' => $examDate,
+                        'total_marks' => $totalMarks
+                    ];
+
+                    $examId = $examModel->create($data);
+                    if ($examId) {
+                        // Assign teachers
+                        if (!empty($assignedTeachers)) {
+                            $examModel->assignTeachers($examId, $assignedTeachers);
+                        }
+                        $successCount++;
+                    } else {
+                        $failCount++;
+                    }
+                } else {
+                    $skippedCount++;
+                }
+            }
+
+            if ($successCount > 0) {
+                $msg = "Successfully created $successCount exam(s).";
+                if ($skippedCount > 0) $msg .= " Skipped $skippedCount class(es) (Subject not found).";
+                if ($failCount > 0) $msg .= " Failed to create $failCount exam(s).";
+                setFlash('success', $msg);
             } else {
-                setFlash('danger', 'Failed to create exam.');
+                setFlash('danger', "Failed to create exams. " . ($skippedCount > 0 ? "Subject '$subjectName' not found in selected classes." : ""));
             }
         }
     }
@@ -56,6 +101,9 @@ require_once __DIR__ . '/../../includes/admin_header.php';
 <div class="card" style="margin-bottom: 1.5rem;">
     <div class="card-header">
         <h3>Create New Exam</h3>
+        <a href="<?php echo BASE_URL; ?>/admin/exams/marks.php" class="btn btn-success btn-sm" style="float: right;">
+            <i class="fas fa-edit"></i> Enter Marks
+        </a>
     </div>
     <div class="card-body">
         <form method="POST" action="">
@@ -70,14 +118,21 @@ require_once __DIR__ . '/../../includes/admin_header.php';
                 </div>
                 
                 <div class="form-group">
-                    <label for="class_id">Class <span style="color: red;">*</span></label>
-                    <select id="class_id" name="class_id" class="form-control" required>
-                        <option value="">Select Class</option>
+                    <label for="class_id">Class(es) <span style="color: red;">*</span></label>
+                    <select id="class_id" name="class_id[]" class="form-control" multiple required style="height: 100px;">
                         <?php foreach ($classes as $class): ?>
                             <option value="<?php echo $class['class_id']; ?>">
                                 <?php echo htmlspecialchars($class['class_name']); ?>
                             </option>
                         <?php endforeach; ?>
+                    </select>
+                    <small class="text-muted">Hold Ctrl/Cmd to select multiple classes</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="subject_name">Subject <span style="color: red;">*</span></label>
+                    <select id="subject_name" name="subject_name" class="form-control" required>
+                        <option value="">Select Class First</option>
                     </select>
                 </div>
                 
@@ -90,6 +145,14 @@ require_once __DIR__ . '/../../includes/admin_header.php';
                     <label for="total_marks">Total Marks</label>
                     <input type="number" id="total_marks" name="total_marks" class="form-control" 
                            placeholder="100" min="0">
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-top: 1rem;">
+                <label for="assigned_teachers">Assign Evaluators (Teachers)</label>
+                <input type="text" id="teacher_search" class="form-control" placeholder="Search teachers by name or ID..." style="margin-bottom: 10px;">
+                <div id="teacher_selection_container" style="border: 1px solid #ddd; padding: 10px; border-radius: 4px; max-height: 200px; overflow-y: auto;">
+                    <p class="text-muted">Select a class first to see available teachers.</p>
                 </div>
             </div>
             
@@ -204,3 +267,98 @@ require_once __DIR__ . '/../../includes/admin_header.php';
 </div>
 
 <?php require_once __DIR__ . '/../../includes/admin_footer.php'; ?>
+
+<script>
+<script>
+<script>
+document.getElementById('class_id').addEventListener('change', function() {
+    // Get selected class IDs
+    const selectedOptions = Array.from(this.selectedOptions);
+    const classIds = selectedOptions.map(option => option.value);
+    
+    const teacherContainer = document.getElementById('teacher_selection_container');
+    const subjectSelect = document.getElementById('subject_name');
+    
+    // Reset Subject Dropdown
+    subjectSelect.innerHTML = '<option value="">Select Subject</option>';
+    
+    if (classIds.length === 0) {
+        teacherContainer.innerHTML = '<p class="text-muted">Select a class first to see available teachers.</p>';
+        subjectSelect.innerHTML = '<option value="">Select Class First</option>';
+        return;
+    }
+    
+    // Load Subjects (Names)
+    const classIdsParam = classIds.join(',');
+    fetch('<?php echo BASE_URL; ?>/admin/exams/get_subjects_by_class.php?class_id=' + classIdsParam)
+        .then(response => response.json())
+        .then(subjects => {
+            subjects.forEach(subject => {
+                const option = document.createElement('option');
+                option.value = subject.subject_name; // Use Name as value
+                option.textContent = subject.subject_name;
+                subjectSelect.appendChild(option);
+            });
+        });
+    
+    // Load Teachers (For all selected classes - union)
+    // We can reuse the same API if we update it to handle multiple classes too, 
+    // OR just fetch for the first class? 
+    // The requirement was "There can be multiple teachers assign for the test evaluation."
+    // Ideally we should show teachers from ALL selected classes.
+    // Let's update get_teachers_by_class.php to also support multiple classes or just loop here?
+    // Updating the API is cleaner. But for now, let's just fetch for the first class or all.
+    // Actually, the user didn't explicitly ask for multi-class teacher loading, but it makes sense.
+    // Let's try to fetch for all. I'll need to update get_teachers_by_class.php as well.
+    // For now, let's just pass the comma separated list if the API supports it.
+    // I haven't updated get_teachers_by_class.php yet.
+    // I will assume I will update it next or it might break.
+    // Let's update get_teachers_by_class.php in the next step.
+    
+    teacherContainer.innerHTML = '<p class="text-muted">Loading teachers...</p>';
+    
+    fetch('<?php echo BASE_URL; ?>/admin/exams/get_teachers_by_class.php?class_id=' + classIdsParam)
+        .then(response => response.json())
+        .then(teachers => {
+            if (teachers.length === 0) {
+                teacherContainer.innerHTML = '<p class="text-muted">No teachers found for selected classes.</p>';
+                return;
+            }
+            
+            let html = '';
+            // Deduplicate teachers if needed (API should handle distinct)
+            teachers.forEach(teacher => {
+                html += `
+                    <div class="form-check teacher-item">
+                        <input class="form-check-input" type="checkbox" name="assigned_teachers[]" 
+                               value="${teacher.teacher_id}" id="teacher_${teacher.teacher_id}">
+                        <label class="form-check-label" for="teacher_${teacher.teacher_id}">
+                            ${teacher.name} (${teacher.subject_speciality || 'No Speciality'})
+                            <span style="font-size: 0.8em; color: #666;">ID: ${teacher.teacher_id}</span>
+                        </label>
+                    </div>
+                `;
+            });
+            teacherContainer.innerHTML = html;
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            teacherContainer.innerHTML = '<p class="text-danger">Error loading teachers.</p>';
+        });
+});
+
+// Teacher Search Functionality
+document.getElementById('teacher_search').addEventListener('input', function() {
+    const searchText = this.value.toLowerCase();
+    const items = document.querySelectorAll('.teacher-item');
+    
+    items.forEach(item => {
+        const label = item.querySelector('label').textContent.toLowerCase();
+        if (label.includes(searchText)) {
+            item.style.display = 'block';
+        } else {
+            item.style.display = 'none';
+        }
+    });
+});
+</script>

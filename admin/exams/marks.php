@@ -1,41 +1,16 @@
 <?php
 /**
- * Teacher - Enter Marks
+ * Admin - Enter Marks
  */
 
-$pageTitle = 'Enter Marks';
-require_once __DIR__ . '/../includes/teacher_header.php';
+require_once __DIR__ . '/../../config.php';
 
-$teacherId = $currentUser['related_id'];
-$teacherModel = new Teacher();
 $examModel = new Exam();
 $classModel = new ClassModel();
 $subjectModel = new Subject();
 $studentModel = new Student();
 $resultModel = new Result();
-
-// Get filter parameters
-$selectedExam = $_GET['exam_id'] ?? '';
-$selectedClass = $_GET['class_id'] ?? '';
-$selectedSection = $_GET['section_id'] ?? '';
-$selectedSubject = $_GET['subject_id'] ?? '';
-
-// Get exams (assigned to this teacher)
-$exams = $examModel->getExamsForTeacher($teacherId);
-
-// Get teacher's assigned classes and subjects
-$assignedClasses = $teacherModel->getAssignedClasses($teacherId);
-$assignedSubjects = $subjectModel->getByTeacher($teacherId);
-
-// Filter subjects based on selected class
-$availableSubjects = [];
-if ($selectedClass) {
-    foreach ($assignedSubjects as $subject) {
-        if ($subject['class_id'] == $selectedClass) {
-            $availableSubjects[] = $subject;
-        }
-    }
-}
+$teacherModel = new Teacher();
 
 // Handle marks submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'save_marks') {
@@ -44,6 +19,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         $subjectId = $_POST['subject_id'];
         $marksData = $_POST['marks'] ?? [];
         $totalMarks = $_POST['total_marks'] ?? 100;
+        
+        // Get filter params for redirect
+        $selectedClass = $_GET['class_id'] ?? '';
+        $selectedSection = $_GET['section_id'] ?? '';
         
         $count = 0;
         foreach ($marksData as $studentId => $marks) {
@@ -54,9 +33,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         }
         
         setFlash('success', "Marks saved for $count students!");
-        redirect(BASE_URL . "/teacher/results.php?exam_id=$examId&class_id=$selectedClass&section_id=$selectedSection&subject_id=$subjectId");
+        redirect(BASE_URL . "/admin/exams/marks.php?exam_id=$examId&class_id=$selectedClass&section_id=$selectedSection&subject_id=$subjectId");
     }
 }
+
+$pageTitle = 'Enter Marks';
+require_once __DIR__ . '/../../includes/admin_header.php';
+
+// Get filter parameters
+$selectedExam = $_GET['exam_id'] ?? '';
+$selectedClass = $_GET['class_id'] ?? '';
+$selectedSection = $_GET['section_id'] ?? '';
+$selectedSubject = $_GET['subject_id'] ?? '';
+
+// Get all exams
+$exams = $examModel->getExamsWithDetails();
+
+// Get all classes
+$classes = $classModel->findAll('class_name');
+
+// Get subjects based on class (if selected)
+$subjects = [];
+if ($selectedClass) {
+    $subjects = $subjectModel->getByClass($selectedClass);
+}
+
+
 
 // Get students and existing marks
 $students = [];
@@ -73,7 +75,10 @@ if ($selectedExam && $selectedClass && $selectedSection && $selectedSubject) {
 
 <div class="card" style="margin-bottom: 1.5rem;">
     <div class="card-header">
-        <h3>Select Criteria</h3>
+        <h3><i class="fas fa-filter"></i> Select Criteria</h3>
+        <a href="<?php echo BASE_URL; ?>/admin/exams/" class="btn btn-secondary btn-sm" style="float: right;">
+            <i class="fas fa-arrow-left"></i> Back to Exams
+        </a>
     </div>
     <div class="card-body">
         <form method="GET" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
@@ -94,7 +99,7 @@ if ($selectedExam && $selectedClass && $selectedSection && $selectedSubject) {
                 <label for="class_id">Class</label>
                 <select id="class_id" name="class_id" class="form-control" required onchange="this.form.submit()">
                     <option value="">Select Class</option>
-                    <?php foreach ($assignedClasses as $class): ?>
+                    <?php foreach ($classes as $class): ?>
                         <option value="<?php echo $class['class_id']; ?>" 
                                 <?php echo $selectedClass == $class['class_id'] ? 'selected' : ''; ?>>
                             <?php echo htmlspecialchars($class['class_name']); ?>
@@ -114,7 +119,7 @@ if ($selectedExam && $selectedClass && $selectedSection && $selectedSubject) {
                 <label for="subject_id">Subject</label>
                 <select id="subject_id" name="subject_id" class="form-control" required>
                     <option value="">Select Subject</option>
-                    <?php foreach ($availableSubjects as $subject): ?>
+                    <?php foreach ($subjects as $subject): ?>
                         <option value="<?php echo $subject['subject_id']; ?>" 
                                 <?php echo $selectedSubject == $subject['subject_id'] ? 'selected' : ''; ?>>
                             <?php echo htmlspecialchars($subject['subject_name']); ?>
@@ -136,7 +141,7 @@ if ($selectedExam && $selectedClass && $selectedSection && $selectedSubject) {
 <?php if (!empty($students)): ?>
     <div class="card">
         <div class="card-header">
-            <h3>Enter Marks</h3>
+            <h3><i class="fas fa-edit"></i> Enter Marks</h3>
         </div>
         <div class="card-body">
             <form method="POST" action="">
@@ -215,4 +220,4 @@ function loadSections(classId) {
 <?php endif; ?>
 </script>
 
-<?php require_once __DIR__ . '/../includes/teacher_footer.php'; ?>
+<?php require_once __DIR__ . '/../../includes/admin_footer.php'; ?>

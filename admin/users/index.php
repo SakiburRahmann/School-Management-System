@@ -3,10 +3,7 @@
  * Admin - User Management
  */
 
-$pageTitle = 'User Management';
-require_once __DIR__ . '/../../includes/admin_header.php';
-
-$userModel = new User();
+require_once __DIR__ . '/../../config.php';
 
 // Handle password reset
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'reset_password') {
@@ -31,6 +28,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     redirect(BASE_URL . '/admin/users/');
 }
 
+$pageTitle = 'User Management';
+require_once __DIR__ . '/../../includes/admin_header.php';
+
+$userModel = new User();
+
+
+
 // Filter and Search
 $role = $_GET['role'] ?? 'All';
 $search = $_GET['search'] ?? '';
@@ -46,8 +50,9 @@ if ($role !== 'All') {
 }
 
 if ($search) {
-    $query .= " AND (username LIKE :search OR role LIKE :search)";
-    $params['search'] = "%$search%";
+    $query .= " AND (username LIKE :search_username OR role LIKE :search_role)";
+    $params['search_username'] = "%$search%";
+    $params['search_role'] = "%$search%";
 }
 
 // Sorting
@@ -81,7 +86,7 @@ $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
             <div class="search-box" style="flex: 1; max-width: 300px;">
                 <form method="GET" style="display: flex; gap: 0.5rem;">
                     <?php if ($role !== 'All'): ?><input type="hidden" name="role" value="<?php echo htmlspecialchars($role); ?>"><?php endif; ?>
-                    <input type="text" name="search" class="form-control" placeholder="Search users..." value="<?php echo htmlspecialchars($search); ?>">
+                    <input type="text" name="search" id="userSearchInput" class="form-control" placeholder="Search users..." value="<?php echo htmlspecialchars($search); ?>">
                     <button type="submit" class="btn btn-primary"><i class="fas fa-search"></i></button>
                 </form>
             </div>
@@ -100,7 +105,7 @@ $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         <th>Actions</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody id="usersTableBody">
                     <?php if (empty($users)): ?>
                         <tr><td colspan="7" class="text-center">No users found.</td></tr>
                     <?php else: ?>
@@ -195,6 +200,52 @@ function togglePasswordVisibility() {
         toggleIcon.classList.add('fa-eye');
     }
 }
+
+// Real-time Search
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('userSearchInput');
+    const tableBody = document.getElementById('usersTableBody');
+    const rows = tableBody.getElementsByTagName('tr');
+    
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase().trim();
+            let hasVisibleRows = false;
+            
+            // Remove existing "no results" row if it exists (but keep the original one if it was from server)
+            const existingNoResults = document.getElementById('js-no-results');
+            if (existingNoResults) {
+                existingNoResults.remove();
+            }
+
+            Array.from(rows).forEach(row => {
+                // Skip if it's the server-side "no results" row
+                if (row.cells.length === 1 && row.cells[0].classList.contains('text-center')) {
+                    return;
+                }
+
+                const username = row.cells[0].textContent.toLowerCase();
+                const role = row.cells[1].textContent.toLowerCase();
+                
+                if (username.includes(searchTerm) || role.includes(searchTerm)) {
+                    row.style.display = '';
+                    hasVisibleRows = true;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+            
+            // Show no results message if needed
+            if (!hasVisibleRows && searchTerm !== '') {
+                const noResultsRow = document.createElement('tr');
+                noResultsRow.id = 'js-no-results';
+                noResultsRow.innerHTML = '<td colspan="7" class="text-center">No users found matching "' + this.value + '"</td>';
+                tableBody.appendChild(noResultsRow);
+            }
+        });
+    }
+});
+
 </script>
 
 <?php require_once __DIR__ . '/../../includes/admin_footer.php'; ?>
