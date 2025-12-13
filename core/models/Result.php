@@ -11,8 +11,8 @@ class Result extends BaseModel {
     /**
      * Save or update result
      */
-    public function saveResult($examId, $studentId, $subjectId, $marks, $totalMarks = 100, $remarks = null) {
-        $grade = calculateGrade($marks, $totalMarks);
+    public function saveResult($examId, $studentId, $subjectId, $marks, $totalMarks = 100, $remarks = null, $gradingSystem = null) {
+        $grade = calculateGrade($marks, $totalMarks, $gradingSystem);
         
         $data = [
             'exam_id' => $examId,
@@ -81,11 +81,9 @@ class Result extends BaseModel {
                 $totalObtained += $result['marks'];
             }
             
-            $percentage = ($totalObtained / $totalMarks) * 100;
-            $overallGrade = calculateGrade($totalObtained, $totalMarks);
             
             // Get student and exam info
-            $sql = "SELECT s.*, c.class_name, sec.section_name, e.exam_name, e.exam_date
+            $sql = "SELECT s.*, c.class_name, sec.section_name, e.exam_name, e.exam_date, e.grading_system
                     FROM students s
                     LEFT JOIN classes c ON s.class_id = c.class_id
                     LEFT JOIN sections sec ON s.section_id = sec.section_id
@@ -96,6 +94,10 @@ class Result extends BaseModel {
                 'student_id' => $studentId,
                 'exam_id' => $examId
             ]);
+
+            $gradingSystem = isset($info['grading_system']) ? json_decode($info['grading_system'], true) : null;
+            $percentage = ($totalObtained / $totalMarks) * 100;
+            $overallGrade = calculateGrade($totalObtained, $totalMarks, $gradingSystem);
             
             return [
                 'info' => $info,

@@ -6,174 +6,136 @@
 require_once __DIR__ . '/../../config.php';
 
 $examModel = new Exam();
-$classModel = new ClassModel();
-$subjectModel = new Subject();
 $studentModel = new Student();
 $resultModel = new Result();
-$teacherModel = new Teacher();
+$subjectModel = new Subject();
+$classModel = new ClassModel();
+
+// Get exam ID
+$examId = $_GET['exam_id'] ?? ($_POST['exam_id'] ?? null);
+
+if (!$examId) {
+    setFlash('danger', 'Invalid Exam ID.');
+    redirect(BASE_URL . '/admin/exams/');
+}
+
+// Get exam details
+$exam = $examModel->find($examId);
+if (!$exam) {
+    setFlash('danger', 'Exam not found.');
+    redirect(BASE_URL . '/admin/exams/');
+}
+
+// Get subject details
+$subject = $subjectModel->find($exam['subject_id']);
+$subjectName = $subject['subject_name'] ?? 'Unknown Subject';
+
+// Get class details
+$class = $classModel->find($exam['class_id']);
+$className = $class['class_name'] ?? 'Unknown Class';
 
 // Handle marks submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'save_marks') {
     if (verifyCSRFToken($_POST['csrf_token'])) {
-        $examId = $_POST['exam_id'];
-        $subjectId = $_POST['subject_id'];
         $marksData = $_POST['marks'] ?? [];
         $totalMarks = $_POST['total_marks'] ?? 100;
-        
-        // Get filter params for redirect
-        $selectedClass = $_GET['class_id'] ?? '';
-        $selectedSection = $_GET['section_id'] ?? '';
         
         $count = 0;
         foreach ($marksData as $studentId => $marks) {
             if ($marks !== '') {
-                $resultModel->saveResult($examId, $studentId, $subjectId, $marks, $totalMarks);
+                // Ensure marks don't exceed total
+                if ($marks > $totalMarks) {
+                    $marks = $totalMarks; 
+                }
+                
+                // Get grading system
+                $gradingSystem = isset($exam['grading_system']) ? json_decode($exam['grading_system'], true) : null;
+                
+                $resultModel->saveResult($examId, $studentId, $exam['subject_id'], $marks, $totalMarks, null, $gradingSystem);
                 $count++;
             }
         }
         
         setFlash('success', "Marks saved for $count students!");
-        redirect(BASE_URL . "/admin/exams/marks.php?exam_id=$examId&class_id=$selectedClass&section_id=$selectedSection&subject_id=$subjectId");
+        redirect(BASE_URL . "/admin/exams/marks.php?exam_id=$examId");
     }
 }
 
-$pageTitle = 'Enter Marks';
-require_once __DIR__ . '/../../includes/admin_header.php';
+// Get all students in the class
+$students = $studentModel->getByClass($exam['class_id']);
 
-// Get filter parameters
-$selectedExam = $_GET['exam_id'] ?? '';
-$selectedClass = $_GET['class_id'] ?? '';
-$selectedSection = $_GET['section_id'] ?? '';
-$selectedSubject = $_GET['subject_id'] ?? '';
-
-// Get all exams
-$exams = $examModel->getExamsWithDetails();
-
-// Get all classes
-$classes = $classModel->findAll('class_name');
-
-// Get subjects based on class (if selected)
-$subjects = [];
-if ($selectedClass) {
-    $subjects = $subjectModel->getByClass($selectedClass);
-}
-
-
-
-// Get students and existing marks
-$students = [];
+// Get existing marks
+$existingResults = $resultModel->getSubjectResults($examId, $exam['subject_id']);
 $existingMarks = [];
-if ($selectedExam && $selectedClass && $selectedSection && $selectedSubject) {
-    $students = $studentModel->getByClass($selectedClass, $selectedSection);
-    $results = $resultModel->getSubjectResults($selectedExam, $selectedSubject);
-    
-    foreach ($results as $result) {
-        $existingMarks[$result['student_id']] = $result['marks'];
-    }
+foreach ($existingResults as $result) {
+    $existingMarks[$result['student_id']] = $result['marks'];
 }
+
+$pageTitle = 'Enter Marks - ' . $exam['exam_name'];
+require_once __DIR__ . '/../../includes/admin_header.php';
 ?>
 
-<div class="card" style="margin-bottom: 1.5rem;">
-    <div class="card-header">
-        <h3><i class="fas fa-filter"></i> Select Criteria</h3>
-        <a href="<?php echo BASE_URL; ?>/admin/exams/" class="btn btn-secondary btn-sm" style="float: right;">
+<div class="card">
+    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+        <div>
+            <h3><i class="fas fa-edit"></i> Enter Marks</h3>
+            <p class="text-muted" style="margin-bottom: 0;">
+                Exam: <strong><?php echo htmlspecialchars($exam['exam_name']); ?></strong> | 
+                Class: <strong><?php echo htmlspecialchars($className); ?></strong> | 
+                Subject: <strong><?php echo htmlspecialchars($subjectName); ?></strong>
+            </p>
+        </div>
+        <a href="<?php echo BASE_URL; ?>/admin/exams/" class="btn btn-secondary btn-sm">
             <i class="fas fa-arrow-left"></i> Back to Exams
         </a>
     </div>
     <div class="card-body">
-        <form method="GET" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
-            <div class="form-group">
-                <label for="exam_id">Exam</label>
-                <select id="exam_id" name="exam_id" class="form-control" required>
-                    <option value="">Select Exam</option>
-                    <?php foreach ($exams as $exam): ?>
-                        <option value="<?php echo $exam['exam_id']; ?>" 
-                                <?php echo $selectedExam == $exam['exam_id'] ? 'selected' : ''; ?>>
-                            <?php echo htmlspecialchars($exam['exam_name']); ?>
-                        </option>
-                    <?php endforeach; ?>
-                </select>
+        <?php if (empty($students)): ?>
+            <div class="alert alert-info">
+                No students found in <?php echo htmlspecialchars($className); ?>.
             </div>
-            
-            <div class="form-group">
-                <label for="class_id">Class</label>
-                <select id="class_id" name="class_id" class="form-control" required onchange="this.form.submit()">
-                    <option value="">Select Class</option>
-                    <?php foreach ($classes as $class): ?>
-                        <option value="<?php echo $class['class_id']; ?>" 
-                                <?php echo $selectedClass == $class['class_id'] ? 'selected' : ''; ?>>
-                            <?php echo htmlspecialchars($class['class_name']); ?>
-                        </option>
-                    <?php endforeach; ?>
-                </select>
-            </div>
-            
-            <div class="form-group">
-                <label for="section_id">Section</label>
-                <select id="section_id" name="section_id" class="form-control" required>
-                    <option value="">Select Section</option>
-                </select>
-            </div>
-            
-            <div class="form-group">
-                <label for="subject_id">Subject</label>
-                <select id="subject_id" name="subject_id" class="form-control" required>
-                    <option value="">Select Subject</option>
-                    <?php foreach ($subjects as $subject): ?>
-                        <option value="<?php echo $subject['subject_id']; ?>" 
-                                <?php echo $selectedSubject == $subject['subject_id'] ? 'selected' : ''; ?>>
-                            <?php echo htmlspecialchars($subject['subject_name']); ?>
-                        </option>
-                    <?php endforeach; ?>
-                </select>
-            </div>
-            
-            <div class="form-group">
-                <label>&nbsp;</label>
-                <button type="submit" class="btn btn-primary" style="width: 100%;">
-                    <i class="fas fa-search"></i> Load Students
-                </button>
-            </div>
-        </form>
-    </div>
-</div>
-
-<?php if (!empty($students)): ?>
-    <div class="card">
-        <div class="card-header">
-            <h3><i class="fas fa-edit"></i> Enter Marks</h3>
-        </div>
-        <div class="card-body">
+        <?php else: ?>
             <form method="POST" action="">
                 <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
                 <input type="hidden" name="action" value="save_marks">
-                <input type="hidden" name="exam_id" value="<?php echo $selectedExam; ?>">
-                <input type="hidden" name="subject_id" value="<?php echo $selectedSubject; ?>">
+                <input type="hidden" name="exam_id" value="<?php echo $examId; ?>">
                 
                 <div class="form-group" style="max-width: 200px; margin-bottom: 1.5rem;">
                     <label for="total_marks">Total Marks</label>
-                    <input type="number" id="total_marks" name="total_marks" class="form-control" value="100" required>
+                    <input type="number" id="total_marks" name="total_marks" class="form-control" 
+                           value="<?php echo $exam['total_marks'] ?? 100; ?>" required readonly>
+                    <small class="text-muted">Total marks defined in exam settings</small>
+                </div>
+                
+                <!-- Search Filter -->
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <input type="text" id="studentSearch" class="form-control" placeholder="Search students by name or roll number...">
                 </div>
                 
                 <div class="table-responsive">
-                    <table>
+                    <table class="table table-bordered table-striped">
                         <thead>
                             <tr>
-                                <th>Roll No</th>
+                                <th width="100">Roll No</th>
                                 <th>Student Name</th>
-                                <th>Marks Obtained</th>
+                                <th>Section</th>
+                                <th width="150">Marks Obtained</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody id="studentTableBody">
                             <?php foreach ($students as $student): ?>
-                                <tr>
-                                    <td><?php echo htmlspecialchars($student['roll_number']); ?></td>
-                                    <td><strong><?php echo htmlspecialchars($student['name']); ?></strong></td>
+                                <tr class="student-row">
+                                    <td><?php echo htmlspecialchars($student['roll_number'] ?? '-'); ?></td>
+                                    <td>
+                                        <strong><?php echo htmlspecialchars($student['name']); ?></strong>
+                                        <div style="font-size: 0.85em; color: #666;">ID: <?php echo $student['student_id_custom']; ?></div>
+                                    </td>
+                                    <td><?php echo htmlspecialchars($student['section_name'] ?? '-'); ?></td>
                                     <td>
                                         <input type="number" name="marks[<?php echo $student['student_id']; ?>]" 
-                                               class="form-control" style="width: 100px;" min="0" max="100"
+                                               class="form-control marks-input" style="width: 100%;" min="0" max="<?php echo $exam['total_marks']; ?>"
                                                value="<?php echo $existingMarks[$student['student_id']] ?? ''; ?>"
-                                               placeholder="Marks">
+                                               placeholder="0" tabindex="<?php echo $student['roll_number']; ?>">
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
@@ -181,43 +143,54 @@ if ($selectedExam && $selectedClass && $selectedSection && $selectedSubject) {
                     </table>
                 </div>
                 
-                <div style="margin-top: 1.5rem;">
+                <div style="margin-top: 1.5rem; position: sticky; bottom: 0; background: white; padding: 1rem; border-top: 1px solid #ddd; display: flex; justify-content: flex-end; gap: 10px;">
+                    <a href="<?php echo BASE_URL; ?>/admin/exams/" class="btn btn-secondary">Cancel</a>
                     <button type="submit" class="btn btn-primary">
                         <i class="fas fa-save"></i> Save Marks
                     </button>
                 </div>
             </form>
-        </div>
+        <?php endif; ?>
     </div>
-<?php endif; ?>
+</div>
 
 <script>
-// Load sections when class is selected
-function loadSections(classId) {
-    const sectionSelect = document.getElementById('section_id');
-    const selectedSection = '<?php echo $selectedSection; ?>';
-    sectionSelect.innerHTML = '<option value="">Select Section</option>';
-    
-    if (!classId) return;
-    
-    fetch('<?php echo BASE_URL; ?>/admin/students/get_sections.php?class_id=' + classId)
-        .then(response => response.json())
-        .then(sections => {
-            sections.forEach(section => {
-                const option = document.createElement('option');
-                option.value = section.section_id;
-                option.textContent = section.section_name;
-                if (section.section_id == selectedSection) {
-                    option.selected = true;
+document.addEventListener('DOMContentLoaded', function() {
+    // Student Search Functionality
+    const searchInput = document.getElementById('studentSearch');
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            const searchText = this.value.toLowerCase();
+            const rows = document.querySelectorAll('.student-row');
+            
+            rows.forEach(row => {
+                const text = row.innerText.toLowerCase();
+                if (text.includes(searchText)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
                 }
-                sectionSelect.appendChild(option);
             });
         });
-}
-
-<?php if ($selectedClass): ?>
-    loadSections('<?php echo $selectedClass; ?>');
-<?php endif; ?>
+    }
+    
+    // Auto-save validation (visual only)
+    const totalMarks = <?php echo $exam['total_marks'] ?? 100; ?>;
+    const inputs = document.querySelectorAll('.marks-input');
+    
+    inputs.forEach(input => {
+        input.addEventListener('input', function() {
+            const val = parseFloat(this.value);
+            if (val > totalMarks) {
+                this.style.borderColor = 'red';
+                this.title = `Marks cannot exceed ${totalMarks}`;
+            } else {
+                this.style.borderColor = '#ddd';
+                this.title = '';
+            }
+        });
+    });
+});
 </script>
 
 <?php require_once __DIR__ . '/../../includes/admin_footer.php'; ?>

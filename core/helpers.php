@@ -230,9 +230,26 @@ function paginate($items, $page = 1, $perPage = RECORDS_PER_PAGE) {
 /**
  * Calculate grade from marks
  */
-function calculateGrade($marks, $totalMarks = 100) {
+function calculateGrade($marks, $totalMarks = 100, $gradingSystem = null) {
     $percentage = ($marks / $totalMarks) * 100;
     
+    // Use custom grading system if provided
+    if ($gradingSystem && is_array($gradingSystem)) {
+        foreach ($gradingSystem as $gradeRule) {
+            // Support both object/array structure from JSON decode
+            $gradeRule = (array)$gradeRule;
+            
+            $min = floatval($gradeRule['min_percent']);
+            $max = floatval($gradeRule['max_percent']);
+            
+            if ($percentage >= $min && $percentage <= $max) {
+                return $gradeRule['grade'];
+            }
+        }
+        return 'F'; // Default fallback if no range matches (though strict ranges should cover it)
+    }
+    
+    // Default legacy system
     if ($percentage >= 80) return 'A+';
     if ($percentage >= 70) return 'A';
     if ($percentage >= 60) return 'A-';

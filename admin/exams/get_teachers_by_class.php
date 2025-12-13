@@ -18,7 +18,8 @@ if (empty($classIds)) {
     exit;
 }
 
-$db = new Database();
+
+$conn = Database::getInstance()->getConnection();
 
 // Create placeholders for IN clause
 $placeholders = str_repeat('?,', count($classIds) - 1) . '?';
@@ -30,7 +31,7 @@ $sql = "SELECT DISTINCT t.teacher_id, t.name, t.subject_speciality
         WHERE s.class_id IN ($placeholders)
         ORDER BY t.name";
 
-$stmt = $db->prepare($sql);
+$stmt = $conn->prepare($sql);
 $stmt->execute($classIds);
 $teachers = $stmt->fetchAll(PDO::FETCH_ASSOC);
 

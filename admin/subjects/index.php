@@ -72,238 +72,267 @@ $allClasses = $classModel->findAll('class_name');
 ?>
 
 <style>
-/* Subjects Page Styles */
-.subject-form-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1rem;
+/* Modern Dashboard Styling (consistent with Classes & Exams) */
+:root {
+    --primary-soft: #eef2ff;
+    --primary-border: #c7d2fe;
+    --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    --hover-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
 }
 
-.subject-form-grid .full-width {
-    grid-column: 1 / -1;
+.page-header {
+    background: white;
+    padding: 1.5rem 2rem;
+    border-radius: 1rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    margin-bottom: 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
-.subject-form-grid .half-width {
-    grid-column: span 2;
+.action-card {
+    background: white;
+    border: 1px solid #f3f4f6;
+    border-radius: 1rem;
+    padding: 1.5rem;
+    height: 100%;
+    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: var(--card-shadow);
+    margin-bottom: 2rem;
 }
 
-/* Multi-select styles */
-.teacher-select-container {
-    position: relative;
+.action-card:hover {
+    box-shadow: var(--hover-shadow);
 }
 
-.teacher-checkboxes {
-    max-height: 200px;
-    overflow-y: auto;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    padding: 0.75rem;
-    background: #fafafa;
-}
-
-.teacher-checkbox-item {
+.action-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin-bottom: 1.5rem;
     display: flex;
     align-items: center;
-    padding: 0.5rem;
-    border-radius: 6px;
-    transition: background 0.2s;
+    gap: 0.75rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #f3f4f6;
 }
 
-.teacher-checkbox-item:hover {
-    background: #f0f0f0;
+.form-control-modern {
+    background-color: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.5rem;
+    padding: 0.75rem 1rem; /* Slightly larger for touch */
+    font-size: 0.95rem;
+    width: 100%;
+    transition: all 0.2s;
 }
 
-.teacher-checkbox-item input[type="checkbox"] {
-    width: 18px;
-    height: 18px;
-    margin-right: 0.75rem;
-    accent-color: var(--primary);
+.form-control-modern:focus {
+    background-color: white;
+    border-color: #4e73df;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(78, 115, 223, 0.1);
 }
 
-.teacher-checkbox-item label {
-    margin: 0;
-    cursor: pointer;
-    flex: 1;
+.btn-modern {
+    width: 100%;
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.2s;
 }
 
-/* Subject cards for table on mobile */
+/* Subject Grid */
+.subject-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.5rem;
+}
+
 .subject-card {
-    display: none;
+    background: white;
+    border-radius: 1rem;
+    border: 1px solid #e5e7eb;
+    overflow: hidden;
+    box-shadow: var(--card-shadow);
+    transition: transform 0.2s, box-shadow 0.2s;
+    display: flex;
+    flex-direction: column;
 }
 
-/* Subject type badges */
-.type-badge {
-    display: inline-block;
+.subject-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--hover-shadow);
+}
+
+.subject-header {
+    padding: 1.25rem;
+    background: linear-gradient(to right, #f9fafb, #fff);
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.subject-icon {
+    width: 42px;
+    height: 42px;
+    background: #e0f2fe;
+    color: #0369a1;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+
+.subject-title-area {
+    margin-left: 1rem;
+    flex-grow: 1;
+}
+
+.subject-name {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #111827;
+    margin-bottom: 0.2rem;
+    line-height: 1.3;
+}
+
+.subject-meta {
+    font-size: 0.85rem;
+    color: #6b7280;
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.subject-body {
+    padding: 1.25rem;
+    flex-grow: 1;
+}
+
+.info-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.75rem;
+    font-size: 0.9rem;
+    color: #4b5563;
+}
+
+.info-row i {
+    width: 24px;
+    color: #9ca3af;
+    text-align: center;
+    margin-right: 0.5rem;
+}
+
+.teachers-list {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px dashed #e5e7eb;
+}
+
+.teacher-tag {
+    display: inline-flex;
+    align-items: center;
+    background: #f3f4f6;
     padding: 0.25rem 0.75rem;
-    border-radius: 20px;
+    border-radius: 9999px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: #374151;
+    margin-right: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.teacher-tag i {
+    font-size: 0.7rem;
+    margin-right: 0.4rem;
+    width: auto;
+}
+
+.subject-footer {
+    padding: 1rem 1.25rem;
+    background: #f9fafb;
+    border-top: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.badge-modern {
+    padding: 0.25rem 0.6rem;
+    border-radius: 0.375rem;
     font-size: 0.75rem;
     font-weight: 600;
     text-transform: uppercase;
 }
+.badge-core { background: #dbeafe; color: #1e40af; }
+.badge-elective { background: #fef3c7; color: #92400e; }
+.badge-lab { background: #d1fae5; color: #065f46; }
 
-.type-badge.core { background: #dbeafe; color: #1d4ed8; }
-.type-badge.elective { background: #fef3c7; color: #b45309; }
-.type-badge.lab { background: #d1fae5; color: #047857; }
-
-/* Status badge */
-.status-badge {
-    display: inline-block;
-    padding: 0.2rem 0.5rem;
-    border-radius: 4px;
-    font-size: 0.7rem;
-    font-weight: 600;
+/* Custom teacher selector styling */
+.teacher-select-box {
+    border: 1px solid #e5e7eb;
+    border-radius: 0.5rem;
+    overflow: hidden;
+    background: #fff;
 }
-
-.status-badge.active { background: #d1fae5; color: #047857; }
-.status-badge.inactive { background: #fee2e2; color: #dc2626; }
-
-/* Teacher ID badge in checkbox list */
-.teacher-id-badge {
-    display: inline-block;
-    background: linear-gradient(135deg, var(--primary), var(--secondary));
-    color: white;
-    padding: 0.15rem 0.5rem;
-    border-radius: 4px;
-    font-size: 0.7rem;
-    font-weight: 600;
-    margin-right: 0.5rem;
-    font-family: monospace;
+.teacher-search-input {
+    border: none;
+    border-bottom: 1px solid #e5e7eb;
+    padding: 0.75rem;
+    width: 100%;
+    outline: none;
+    background: #f9fafb;
 }
-
-/* Search no results message */
-.no-results-message {
-    text-align: center;
-    padding: 1.5rem;
-    color: #999;
+.teacher-search-input:focus {
+    background: #fff;
 }
-
-/* Teacher tags */
-.teacher-tags {
+.teacher-list-scroll {
+    max-height: 200px;
+    overflow-y: auto;
+}
+.teacher-option {
+    padding: 0.5rem 0.75rem;
     display: flex;
-    flex-wrap: wrap;
-    gap: 0.25rem;
+    align-items: center;
+    gap: 0.75rem;
+    cursor: pointer;
+    transition: background 0.1s;
 }
-
-.teacher-tag {
-    background: linear-gradient(135deg, var(--primary), var(--secondary));
-    color: white;
-    padding: 0.2rem 0.5rem;
-    border-radius: 12px;
-    font-size: 0.75rem;
-    font-weight: 500;
+.teacher-option:hover {
+    background: #f3f4f6;
 }
-
-.teacher-count {
-    background: #e5e7eb;
+.teacher-option input[type="checkbox"] {
+    width: 1.1rem;
+    height: 1.1rem;
+    accent-color: #4e73df;
+    cursor: pointer;
+}
+.teacher-label {
+    flex-grow: 1;
+    font-size: 0.9rem;
     color: #374151;
-    padding: 0.2rem 0.5rem;
-    border-radius: 12px;
-    font-size: 0.75rem;
-}
-
-/* Action buttons */
-.action-buttons {
-    display: flex;
-    gap: 0.5rem;
-    flex-wrap: wrap;
-}
-
-.action-buttons .btn-sm {
-    padding: 0.4rem 0.6rem;
-}
-
-/* Responsive */
-@media (max-width: 1024px) {
-    .subject-form-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-    
-    .subject-form-grid .half-width {
-        grid-column: 1 / -1;
-    }
-}
-
-@media (max-width: 768px) {
-    .subject-form-grid {
-        grid-template-columns: 1fr;
-    }
-    
-    .subject-form-grid .half-width,
-    .subject-form-grid .full-width {
-        grid-column: 1;
-    }
-    
-    /* Hide table, show cards */
-    .subjects-table {
-        display: none;
-    }
-    
-    .subject-card {
-        display: block;
-        background: white;
-        border-radius: 12px;
-        padding: 1rem;
-        margin-bottom: 1rem;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-        border-left: 4px solid var(--primary);
-    }
-    
-    .subject-card-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        margin-bottom: 0.75rem;
-    }
-    
-    .subject-card-title {
-        font-weight: 600;
-        color: var(--dark);
-        margin: 0;
-    }
-    
-    .subject-card-code {
-        font-family: monospace;
-        background: #f3f4f6;
-        padding: 0.2rem 0.5rem;
-        border-radius: 4px;
-        font-size: 0.85rem;
-    }
-    
-    .subject-card-meta {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.5rem;
-        margin-bottom: 0.75rem;
-    }
-    
-    .subject-card-info {
-        font-size: 0.9rem;
-        color: #666;
-        margin-bottom: 0.5rem;
-    }
-    
-    .subject-card-actions {
-        display: flex;
-        gap: 0.5rem;
-        padding-top: 0.75rem;
-        border-top: 1px solid #eee;
-    }
-    
-    .subject-card-actions .btn {
-        flex: 1;
-        text-align: center;
-    }
+    cursor: pointer;
 }
 </style>
 
 <!-- Error Messages (for duplicate validation) -->
 <?php if (!empty($errors)): ?>
-    <div class="validation-alert validation-alert-danger">
+    <div class="validation-alert validation-alert-danger" style="margin-bottom: 2rem;">
         <div class="validation-alert-icon">
             <i class="fas fa-exclamation-circle"></i>
         </div>
         <div class="validation-alert-content">
-            <strong>Please fix the following errors:</strong>
+            <strong>Check these errors:</strong>
             <ul>
                 <?php foreach ($errors as $error): ?>
                     <li><?php echo htmlspecialchars($error); ?></li>
@@ -316,53 +345,60 @@ $allClasses = $classModel->findAll('class_name');
     </div>
 <?php endif; ?>
 
-<!-- Add Subject Form -->
-<div class="card" style="margin-bottom: 1.5rem;">
-    <div class="card-header">
-        <h3><i class="fas fa-plus-circle"></i> Add New Subject</h3>
+<div class="page-header">
+    <div>
+        <h3 style="margin:0; font-weight: 700; color: #111827;">Academic Subjects</h3>
+        <p style="margin: 0.25rem 0 0 0; color: #6b7280;">Manage curriculum, credits, and teacher assignments.</p>
     </div>
-    <div class="card-body">
-        <form method="POST" action="">
-            <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
-            <input type="hidden" name="action" value="add_subject">
-            
-            <div class="subject-form-grid">
-                <!-- Subject Name -->
-                <div class="form-group">
-                    <label for="subject_name">Subject Name <span style="color: var(--danger);">*</span></label>
-                    <input type="text" id="subject_name" name="subject_name" class="form-control" 
-                           placeholder="e.g., Mathematics" required
+</div>
+
+<!-- Add Subject Form Card -->
+<div class="action-card">
+    <div class="action-title">
+        <div style="background: #e0f2fe; padding: 8px; border-radius: 8px; color: #0369a1;">
+            <i class="fas fa-book-open"></i>
+        </div>
+        Add New Subject
+    </div>
+    
+    <form method="POST" action="">
+        <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
+        <input type="hidden" name="action" value="add_subject">
+        
+        <div class="row">
+            <!-- Left Column: Basic Info -->
+            <div class="col-md-6">
+                <div class="form-group mb-3">
+                    <label class="form-label" style="font-weight: 600; color: #374151;">Subject Name <span class="text-danger">*</span></label>
+                    <input type="text" name="subject_name" class="form-control-modern" 
+                           placeholder="e.g. Advanced Mathematics" required
                            value="<?php echo htmlspecialchars($formData['subject_name']); ?>">
                 </div>
                 
-                <!-- Subject Code (Auto-generated) -->
-                <!-- <div class="form-group">
-                    <label>Subject Code</label>
-                    <input type="text" class="form-control" value="Auto-generated" disabled style="background: #f9f9f9; color: #888;">
-                </div> -->
-                
-                <!-- Subject Type -->
-                <div class="form-group">
-                    <label for="subject_type">Subject Type</label>
-                    <select id="subject_type" name="subject_type" class="form-control">
-                        <option value="Core" <?php echo $formData['subject_type'] === 'Core' ? 'selected' : ''; ?>>Core Subject</option>
-                        <option value="Elective" <?php echo $formData['subject_type'] === 'Elective' ? 'selected' : ''; ?>>Elective</option>
-                        <option value="Lab" <?php echo $formData['subject_type'] === 'Lab' ? 'selected' : ''; ?>>Lab/Practical</option>
-                    </select>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group mb-3">
+                            <label class="form-label" style="font-weight: 600; color: #374151;">Type</label>
+                            <select name="subject_type" class="form-control-modern">
+                                <option value="Core" <?php echo $formData['subject_type'] === 'Core' ? 'selected' : ''; ?>>Core</option>
+                                <option value="Elective" <?php echo $formData['subject_type'] === 'Elective' ? 'selected' : ''; ?>>Elective</option>
+                                <option value="Lab" <?php echo $formData['subject_type'] === 'Lab' ? 'selected' : ''; ?>>Lab</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group mb-3">
+                            <label class="form-label" style="font-weight: 600; color: #374151;">Credits/Hours</label>
+                            <input type="number" name="credits_hours" class="form-control-modern" 
+                                   placeholder="e.g. 4" min="0" max="20"
+                                   value="<?php echo htmlspecialchars($formData['credits_hours']); ?>">
+                        </div>
+                    </div>
                 </div>
-                
-                <!-- Credits/Hours -->
-                <div class="form-group">
-                    <label for="credits_hours">Credits / Hours per Week</label>
-                    <input type="number" id="credits_hours" name="credits_hours" class="form-control" 
-                           placeholder="e.g., 4" min="0" max="20"
-                           value="<?php echo htmlspecialchars($formData['credits_hours']); ?>">
-                </div>
-                
-                <!-- Class -->
-                <div class="form-group">
-                    <label for="class_id">Assign to Class</label>
-                    <select id="class_id" name="class_id" class="form-control">
+
+                <div class="form-group mb-3">
+                    <label class="form-label" style="font-weight: 600; color: #374151;">Assign to Class</label>
+                    <select name="class_id" class="form-control-modern">
                         <option value="">All Classes / No Specific Class</option>
                         <?php foreach ($allClasses as $class): ?>
                             <option value="<?php echo $class['class_id']; ?>" 
@@ -372,209 +408,143 @@ $allClasses = $classModel->findAll('class_name');
                         <?php endforeach; ?>
                     </select>
                 </div>
-                
-                <!-- Status (hidden, default Active) -->
-                <input type="hidden" name="status" value="Active">
-                
-                <!-- Description -->
-                <div class="form-group full-width">
-                    <label for="description">Description</label>
-                    <textarea id="description" name="description" class="form-control" rows="2"
-                              placeholder="Brief description of the subject (optional)"><?php echo htmlspecialchars($formData['description']); ?></textarea>
-                </div>
-                
-                <!-- Assign Teachers (Multi-select with Search) -->
-                <div class="form-group full-width">
-                    <label>Assign Teachers (Optional - Select Multiple)</label>
-                    <!-- Search Input -->
-                    <div class="teacher-search-wrapper" style="margin-bottom: 0.5rem;">
-                        <input type="text" id="teacherSearchAdd" class="form-control" 
-                               placeholder="🔍 Search by teacher name or ID..." 
-                               style="border-radius: 8px 8px 0 0;">
-                        <small id="teacherSearchResultsAdd" style="color: #666; display: block; padding: 0.25rem 0.5rem; background: #f5f5f5; border-radius: 0 0 8px 8px;">
-                            Showing all <?php echo count($allTeachers); ?> teachers
-                        </small>
-                    </div>
-                    <div class="teacher-checkboxes" id="teacherListAdd">
-                        <?php if (!empty($allTeachers)): ?>
-                            <?php foreach ($allTeachers as $teacher): ?>
-                                <div class="teacher-checkbox-item" 
-                                     data-name="<?php echo strtolower(htmlspecialchars($teacher['name'])); ?>"
-                                     data-id="<?php echo strtolower(htmlspecialchars($teacher['teacher_id_custom'] ?? '')); ?>">
-                                    <input type="checkbox" 
-                                           id="teacher_<?php echo $teacher['teacher_id']; ?>" 
-                                           name="teacher_ids[]" 
-                                           value="<?php echo $teacher['teacher_id']; ?>"
-                                           <?php echo in_array($teacher['teacher_id'], $formData['teacher_ids']) ? 'checked' : ''; ?>>
-                                    <label for="teacher_<?php echo $teacher['teacher_id']; ?>">
-                                        <?php if (!empty($teacher['teacher_id_custom'])): ?>
-                                            <span class="teacher-id-badge"><?php echo htmlspecialchars($teacher['teacher_id_custom']); ?></span>
-                                        <?php endif; ?>
-                                        <?php echo htmlspecialchars($teacher['name']); ?>
-                                        <?php if (!empty($teacher['email'])): ?>
-                                            <small style="color: #888;">- <?php echo htmlspecialchars($teacher['email']); ?></small>
-                                        <?php endif; ?>
+            </div>
+
+            <!-- Right Column: Teachers & Description -->
+            <div class="col-md-6">
+                 <div class="form-group mb-3">
+                    <label class="form-label" style="font-weight: 600; color: #374151;">Assign Teachers (Optional)</label>
+                    <div class="teacher-select-box">
+                        <input type="text" id="teacherSearchAdd" class="teacher-search-input" placeholder="🔍 Search by name...">
+                        <div class="teacher-list-scroll" id="teacherListAdd">
+                            <?php if (!empty($allTeachers)): ?>
+                                <?php foreach ($allTeachers as $teacher): ?>
+                                    <label class="teacher-option" data-name="<?php echo strtolower(htmlspecialchars($teacher['name'])); ?>">
+                                        <input type="checkbox" name="teacher_ids[]" value="<?php echo $teacher['teacher_id']; ?>"
+                                               <?php echo in_array($teacher['teacher_id'], $formData['teacher_ids']) ? 'checked' : ''; ?>>
+                                        <span class="teacher-label">
+                                            <?php echo htmlspecialchars($teacher['name']); ?>
+                                            <?php if (!empty($teacher['teacher_id_custom'])): ?>
+                                                <small class="text-muted">(<?php echo htmlspecialchars($teacher['teacher_id_custom']); ?>)</small>
+                                            <?php endif; ?>
+                                        </span>
                                     </label>
-                                </div>
-                            <?php endforeach; ?>
-                        <?php else: ?>
-                            <p style="color: #999; margin: 0;">No teachers available. <a href="<?php echo BASE_URL; ?>/admin/teachers/add.php">Add teachers first</a>.</p>
-                        <?php endif; ?>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <div style="padding: 1rem; text-align: center; color: #9ca3af;">No teachers found</div>
+                            <?php endif; ?>
+                        </div>
                     </div>
+                    <small class="text-muted" id="teacherSearchResultsAdd">Select multiple teachers if needed.</small>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label class="form-label" style="font-weight: 600; color: #374151;">Description (Optional)</label>
+                     <textarea name="description" class="form-control-modern" rows="1" style="resize: none;"
+                               placeholder="Brief details..."><?php echo htmlspecialchars($formData['description']); ?></textarea>
                 </div>
             </div>
-            
-            <button type="submit" class="btn btn-primary" style="margin-top: 1rem;">
-                <i class="fas fa-plus"></i> Add Subject
-            </button>
-        </form>
-    </div>
-</div>
-
-<!-- Subjects List -->
-<div class="card">
-    <div class="card-header">
-        <h3><i class="fas fa-book"></i> All Subjects</h3>
-        <span class="badge" style="background: var(--primary); color: white; padding: 0.5rem 1rem; border-radius: 20px;">
-            <?php echo count($subjects); ?> Total
-        </span>
-    </div>
-    <div class="card-body">
-        <!-- Desktop Table -->
-        <div class="table-responsive subjects-table">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Subject</th>
-                        <th>Code</th>
-                        <th>Type</th>
-                        <th>Class</th>
-                        <th>Teachers</th>
-                        <th>Credits</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php if (!empty($subjects)): ?>
-                        <?php foreach ($subjects as $subject): ?>
-                            <tr>
-                                <td><strong><?php echo htmlspecialchars($subject['subject_name']); ?></strong></td>
-                                <td><code style="background: #f3f4f6; padding: 0.2rem 0.5rem; border-radius: 4px;"><?php echo htmlspecialchars($subject['subject_code']); ?></code></td>
-                                <td>
-                                    <span class="type-badge <?php echo strtolower($subject['subject_type'] ?? 'core'); ?>">
-                                        <?php echo htmlspecialchars($subject['subject_type'] ?? 'Core'); ?>
-                                    </span>
-                                </td>
-                                <td><?php echo htmlspecialchars($subject['class_name'] ?? 'All Classes'); ?></td>
-                                <td>
-                                    <?php if (!empty($subject['teacher_names'])): ?>
-                                        <div class="teacher-tags">
-                                            <?php 
-                                            $teachers = explode(', ', $subject['teacher_names']);
-                                            $displayTeachers = array_slice($teachers, 0, 2);
-                                            foreach ($displayTeachers as $teacher): ?>
-                                                <span class="teacher-tag"><?php echo htmlspecialchars($teacher); ?></span>
-                                            <?php endforeach; ?>
-                                            <?php if (count($teachers) > 2): ?>
-                                                <span class="teacher-count">+<?php echo count($teachers) - 2; ?> more</span>
-                                            <?php endif; ?>
-                                        </div>
-                                    <?php else: ?>
-                                        <span style="color: #999;">Not assigned</span>
-                                    <?php endif; ?>
-                                </td>
-                                <td><?php echo (int)($subject['credits_hours'] ?? 0); ?></td>
-                                <td>
-                                    <span class="status-badge <?php echo strtolower($subject['status'] ?? 'active'); ?>">
-                                        <?php echo htmlspecialchars($subject['status'] ?? 'Active'); ?>
-                                    </span>
-                                </td>
-                                <td>
-                                    <div class="action-buttons">
-                                        <a href="<?php echo BASE_URL; ?>/admin/subjects/view.php?id=<?php echo $subject['subject_id']; ?>" 
-                                           class="btn btn-info btn-sm" title="View Details">
-                                            <i class="fas fa-eye"></i>
-                                        </a>
-                                        <a href="<?php echo BASE_URL; ?>/admin/subjects/edit.php?id=<?php echo $subject['subject_id']; ?>" 
-                                           class="btn btn-warning btn-sm" title="Edit">
-                                            <i class="fas fa-edit"></i>
-                                        </a>
-                                        <a href="<?php echo BASE_URL; ?>/admin/subjects/delete.php?id=<?php echo $subject['subject_id']; ?>" 
-                                           class="btn btn-danger btn-sm delete-btn"
-                                           data-delete-url="<?php echo BASE_URL; ?>/admin/subjects/delete.php?id=<?php echo $subject['subject_id']; ?>"
-                                           data-delete-message="Are you sure you want to delete subject '<?php echo htmlspecialchars($subject['subject_name']); ?>'?"
-                                           title="Delete">
-                                            <i class="fas fa-trash"></i>
-                                        </a>
-                                    </div>
-                                </td>
-                            </tr>
-                        <?php endforeach; ?>
-                    <?php else: ?>
-                        <tr>
-                            <td colspan="8" style="text-align: center; padding: 3rem;">
-                                <i class="fas fa-book-open" style="font-size: 3rem; color: #ddd; margin-bottom: 1rem;"></i>
-                                <p style="color: #999;">No subjects found. Add your first subject above.</p>
-                            </td>
-                        </tr>
-                    <?php endif; ?>
-                </tbody>
-            </table>
         </div>
         
-        <!-- Mobile Cards -->
-        <?php if (!empty($subjects)): ?>
-            <?php foreach ($subjects as $subject): ?>
-                <div class="subject-card">
-                    <div class="subject-card-header">
-                        <h4 class="subject-card-title"><?php echo htmlspecialchars($subject['subject_name']); ?></h4>
-                        <span class="subject-card-code"><?php echo htmlspecialchars($subject['subject_code']); ?></span>
+        <button type="submit" class="btn btn-primary btn-modern" style="margin-top: 1rem;">
+            <i class="fas fa-plus-circle"></i> Create Subject
+        </button>
+    </form>
+</div>
+
+<div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem;">
+    <h4 style="font-weight: 700; color: #374151; margin: 0;">Existing Subjects</h4>
+    <span class="badge" style="background: #e5e7eb; color: #374151; padding: 0.4rem 0.8rem; border-radius: 20px;">
+        <?php echo count($subjects); ?> Total
+    </span>
+</div>
+
+<?php if (!empty($subjects)): ?>
+    <div class="subject-grid">
+        <?php foreach ($subjects as $subject): ?>
+            <div class="subject-card">
+                <div class="subject-header">
+                    <div class="subject-icon">
+                        <i class="fas fa-book"></i>
                     </div>
-                    <div class="subject-card-meta">
-                        <span class="type-badge <?php echo strtolower($subject['subject_type'] ?? 'core'); ?>">
-                            <?php echo htmlspecialchars($subject['subject_type'] ?? 'Core'); ?>
+                    <div class="subject-title-area">
+                        <div class="subject-name"><?php echo htmlspecialchars($subject['subject_name']); ?></div>
+                        <div class="subject-meta">
+                            <span>Code: <?php echo htmlspecialchars($subject['subject_code']); ?></span>
+                        </div>
+                    </div>
+                    <span class="badge-modern badge-<?php echo strtolower($subject['subject_type']); ?>">
+                        <?php echo htmlspecialchars($subject['subject_type']); ?>
+                    </span>
+                </div>
+                
+                <div class="subject-body">
+                    <div class="info-row">
+                        <i class="fas fa-chalkboard"></i>
+                        <span style="font-weight: 500;">
+                            <?php echo htmlspecialchars($subject['class_name'] ?? 'All Classes'); ?>
                         </span>
-                        <span class="status-badge <?php echo strtolower($subject['status'] ?? 'active'); ?>">
-                            <?php echo htmlspecialchars($subject['status'] ?? 'Active'); ?>
-                        </span>
-                        <?php if ($subject['credits_hours']): ?>
-                            <span style="font-size: 0.85rem; color: #666;">
-                                <i class="fas fa-clock"></i> <?php echo (int)$subject['credits_hours']; ?> hrs/week
-                            </span>
+                    </div>
+                    
+                    <?php if ($subject['credits_hours'] > 0): ?>
+                    <div class="info-row">
+                        <i class="fas fa-clock"></i>
+                        <span><?php echo (int)$subject['credits_hours']; ?> Credits / Hours</span>
+                    </div>
+                    <?php endif; ?>
+                    
+                    <div class="teachers-list">
+                         <?php if (!empty($subject['teacher_names'])): 
+                            $teachers = explode(', ', $subject['teacher_names']);
+                            $displayTeachers = array_slice($teachers, 0, 3);
+                         ?>
+                            <?php foreach ($displayTeachers as $teacher): ?>
+                                <span class="teacher-tag">
+                                    <i class="fas fa-user"></i>
+                                    <?php echo htmlspecialchars($teacher); ?>
+                                </span>
+                            <?php endforeach; ?>
+                            <?php if (count($teachers) > 3): ?>
+                                <span class="teacher-tag" style="background: #e5e7eb;">+<?php echo count($teachers) - 3; ?></span>
+                            <?php endif; ?>
+                        <?php else: ?>
+                            <span style="color: #9ca3af; font-size: 0.9rem; font-style: italic;">No teachers assigned</span>
                         <?php endif; ?>
                     </div>
-                    <div class="subject-card-info">
-                        <i class="fas fa-school"></i> <?php echo htmlspecialchars($subject['class_name'] ?? 'All Classes'); ?>
+                </div>
+                
+                <div class="subject-footer">
+                    <div>
+                         <!-- Status Dot -->
+                         <div style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.85rem; color: #059669; font-weight: 600;">
+                             <div style="width: 8px; height: 8px; border-radius: 50%; background: #10b981;"></div>
+                             Active
+                         </div>
                     </div>
-                    <?php if (!empty($subject['teacher_names'])): ?>
-                        <div class="subject-card-info">
-                            <i class="fas fa-users"></i> <?php echo htmlspecialchars($subject['teacher_names']); ?>
-                        </div>
-                    <?php endif; ?>
-                    <div class="subject-card-actions">
-                        <a href="<?php echo BASE_URL; ?>/admin/subjects/view.php?id=<?php echo $subject['subject_id']; ?>" class="btn btn-info btn-sm">
-                            <i class="fas fa-eye"></i> View
-                        </a>
-                        <a href="<?php echo BASE_URL; ?>/admin/subjects/edit.php?id=<?php echo $subject['subject_id']; ?>" class="btn btn-warning btn-sm">
-                            <i class="fas fa-edit"></i> Edit
+                    <div style="display: flex; gap: 0.5rem;">
+                         <a href="<?php echo BASE_URL; ?>/admin/subjects/edit.php?id=<?php echo $subject['subject_id']; ?>" 
+                           class="btn btn-warning btn-sm" style="border-radius: 6px;" title="Edit">
+                            <i class="fas fa-pencil-alt"></i>
                         </a>
                         <a href="<?php echo BASE_URL; ?>/admin/subjects/delete.php?id=<?php echo $subject['subject_id']; ?>" 
-                           class="btn btn-danger btn-sm delete-btn"
+                           class="btn btn-danger btn-sm delete-btn" style="border-radius: 6px;"
                            data-delete-url="<?php echo BASE_URL; ?>/admin/subjects/delete.php?id=<?php echo $subject['subject_id']; ?>"
-                           data-delete-message="Are you sure you want to delete this subject?">
+                           data-delete-message="Delete subject '<?php echo htmlspecialchars($subject['subject_name']); ?>'?"
+                           title="Delete">
                             <i class="fas fa-trash"></i>
                         </a>
                     </div>
                 </div>
-            <?php endforeach; ?>
-        <?php endif; ?>
-        
-        <div style="margin-top: 1.5rem; text-align: center;">
-            <p><strong>Total Subjects:</strong> <?php echo count($subjects); ?></p>
-        </div>
+            </div>
+        <?php endforeach; ?>
     </div>
-</div>
+<?php else: ?>
+    <div style="text-align: center; padding: 4rem; background: white; border-radius: 1rem; color: #6b7280; box-shadow: var(--card-shadow);">
+        <i class="fas fa-book-reader fa-3x mb-3" style="color: #e5e7eb;"></i>
+        <h4>No Subjects Yet</h4>
+        <p>Use the form above to add your first subject to the curriculum.</p>
+    </div>
+<?php endif; ?>
 
 <script>
 // Teacher Search Functionality
@@ -582,19 +552,16 @@ document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('teacherSearchAdd');
     const teacherList = document.getElementById('teacherListAdd');
     const resultsInfo = document.getElementById('teacherSearchResultsAdd');
-    const totalTeachers = <?php echo count($allTeachers); ?>;
     
     if (searchInput && teacherList) {
         searchInput.addEventListener('input', function() {
             const searchTerm = this.value.toLowerCase().trim();
-            const items = teacherList.querySelectorAll('.teacher-checkbox-item');
+            const items = teacherList.querySelectorAll('.teacher-option');
             let visibleCount = 0;
             
             items.forEach(item => {
                 const name = item.getAttribute('data-name') || '';
-                const teacherId = item.getAttribute('data-id') || '';
-                
-                if (searchTerm === '' || name.includes(searchTerm) || teacherId.includes(searchTerm)) {
+                if (searchTerm === '' || name.includes(searchTerm)) {
                     item.style.display = 'flex';
                     visibleCount++;
                 } else {
@@ -603,20 +570,14 @@ document.addEventListener('DOMContentLoaded', function() {
             });
             
             // Update results info
-            if (searchTerm === '') {
-                resultsInfo.textContent = `Showing all ${totalTeachers} teachers`;
-            } else if (visibleCount === 0) {
-                resultsInfo.innerHTML = `<span style="color: #dc2626;">No teachers found matching "${this.value}"</span>`;
+            if (searchTerm !== '') {
+                resultsInfo.textContent = visibleCount > 0 
+                    ? `Found ${visibleCount} match(es)` 
+                    : 'No matches found';
+                resultsInfo.style.color = visibleCount > 0 ? '#666' : '#dc2626';
             } else {
-                resultsInfo.textContent = `Found ${visibleCount} teacher${visibleCount !== 1 ? 's' : ''} matching "${this.value}"`;
-            }
-        });
-        
-        // Clear search on escape
-        searchInput.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') {
-                this.value = '';
-                this.dispatchEvent(new Event('input'));
+                resultsInfo.textContent = 'Select multiple teachers if needed.';
+                resultsInfo.style.color = '#666';
             }
         });
     }

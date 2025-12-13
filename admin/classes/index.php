@@ -62,76 +62,259 @@ $pageTitle = 'Classes & Sections';
 require_once __DIR__ . '/../../includes/admin_header.php';
 ?>
 
-<script>
-// Test toast on page load
-setTimeout(function() {
-    console.log('Testing toast...');
-    console.log('showToast function exists:', typeof showToast);
-    if (typeof showToast === 'function') {
-        console.log('Calling showToast...');
-        showToast('Page loaded successfully!', 'info');
-    } else {
-        console.error('showToast function not found!');
-    }
-}, 500);
-</script>
+<style>
+/* Modern Dashboard Styling */
+:root {
+    --primary-soft: #eef2ff;
+    --primary-border: #c7d2fe;
+    --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    --hover-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
 
-<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
-    <!-- Add Class Card -->
-    <div class="card">
-        <div class="card-header">
-            <h3>Add New Class</h3>
-        </div>
-        <div class="card-body">
+.page-header {
+    background: white;
+    padding: 1.5rem 2rem;
+    border-radius: 1rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    margin-bottom: 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.action-card {
+    background: white;
+    border: 1px solid #f3f4f6;
+    border-radius: 1rem;
+    padding: 1.5rem;
+    height: 100%;
+    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: var(--card-shadow);
+}
+
+.action-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--hover-shadow);
+}
+
+.action-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.form-control-modern {
+    background-color: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.5rem;
+    padding: 0.625rem 0.875rem;
+    font-size: 0.95rem;
+    width: 100%;
+    transition: all 0.2s;
+}
+
+.form-control-modern:focus {
+    background-color: white;
+    border-color: #4e73df;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(78, 115, 223, 0.1);
+}
+
+.btn-modern {
+    width: 100%;
+    padding: 0.625rem;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.2s;
+}
+
+/* Class Cards Grid */
+.class-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 1.5rem;
+}
+
+.class-card {
+    background: white;
+    border-radius: 1rem;
+    border: 1px solid #e5e7eb;
+    overflow: hidden;
+    box-shadow: var(--card-shadow);
+}
+
+.class-header {
+    background: linear-gradient(to right, #f9fafb, #fff);
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.class-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #374151;
+}
+
+.class-body {
+    padding: 1.5rem;
+}
+
+/* Section Chips */
+.section-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.section-item {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.75rem;
+    padding: 0.75rem 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.2s;
+}
+
+.section-item:hover {
+    background: white;
+    border-color: #cbd5e1;
+    transform: translateX(4px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.section-info {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.section-badge {
+    background: #e0f2fe;
+    color: #0369a1;
+    font-weight: 700;
+    padding: 0.25rem 0.6rem;
+    border-radius: 0.375rem;
+    font-size: 0.85rem;
+    min-width: 32px;
+    text-align: center;
+}
+
+.teacher-info {
+    font-size: 0.9rem;
+    color: #64748b;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.action-buttons {
+    opacity: 0.5;
+    transition: opacity 0.2s;
+}
+
+.section-item:hover .action-buttons {
+    opacity: 1;
+}
+
+.btn-icon {
+    padding: 0.25rem;
+    color: #94a3b8;
+    transition: color 0.2s;
+}
+.btn-icon:hover { color: #4e73df; }
+.btn-icon.delete:hover { color: #ef4444; }
+
+/* Custom Search Input override */
+.teacher-search-wrapper {
+    position: relative;
+    margin-bottom: 0.5rem;
+}
+</style>
+
+<div class="page-header">
+    <div>
+        <h3 style="margin:0; font-weight: 700; color: #111827;">Academic Structure</h3>
+        <p style="margin: 0.25rem 0 0 0; color: #6b7280;">Manage classes, sections, and class teacher assignments.</p>
+    </div>
+</div>
+
+<div class="row mb-5">
+    <!-- Add Class -->
+    <div class="col-md-5 mb-4">
+        <div class="action-card">
+            <div class="action-title">
+                <div style="background: #eff6ff; padding: 8px; border-radius: 8px; color: #2563eb;">
+                    <i class="fas fa-layer-group"></i>
+                </div>
+                Create New Class
+            </div>
             <form method="POST" action="" id="addClassForm">
                 <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
                 <input type="hidden" name="action" value="add_class">
                 
-                <div class="form-group">
-                    <label for="class_name">Class Name</label>
-                    <input type="text" id="class_name" name="class_name" class="form-control" 
-                           placeholder="e.g., Class 11" required>
+                <div class="form-group mb-3">
+                    <input type="text" id="class_name" name="class_name" class="form-control-modern" 
+                           placeholder="Enter Class Name (e.g. Class 10)" required>
                 </div>
                 
-                <button type="submit" class="btn btn-primary">
+                <button type="submit" class="btn btn-primary btn-modern">
                     <i class="fas fa-plus"></i> Add Class
                 </button>
             </form>
         </div>
     </div>
-    
-    <!-- Add Section Card -->
-    <div class="card">
-        <div class="card-header">
-            <h3>Add New Section</h3>
-        </div>
-        <div class="card-body">
+
+    <!-- Add Section -->
+    <div class="col-md-7 mb-4">
+        <div class="action-card" style="border-left: 4px solid #4e73df;">
+            <div class="action-title">
+                <div style="background: #f0fdf4; padding: 8px; border-radius: 8px; color: #16a34a;">
+                    <i class="fas fa-puzzle-piece"></i>
+                </div>
+                Add Section to Class
+            </div>
             <form method="POST" action="" id="addSectionForm">
                 <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
                 <input type="hidden" name="action" value="add_section">
                 
-                <div class="form-group">
-                    <label for="class_id">Class</label>
-                    <select id="class_id" name="class_id" class="form-control" required>
-                        <option value="">Select Class</option>
-                        <?php foreach ($classes as $class): ?>
-                            <option value="<?php echo $class['class_id']; ?>">
-                                <?php echo htmlspecialchars($class['class_name']); ?>
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="form-group mb-3">
+                            <select id="class_id" name="class_id" class="form-control-modern" required>
+                                <option value="">Select Class</option>
+                                <?php foreach ($classes as $class): ?>
+                                    <option value="<?php echo $class['class_id']; ?>">
+                                        <?php echo htmlspecialchars($class['class_name']); ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group mb-3">
+                            <input type="text" id="section_name" name="section_name" class="form-control-modern" 
+                                   placeholder="Section Name (e.g. A)" required>
+                        </div>
+                    </div>
                 </div>
-                
-                <div class="form-group">
-                    <label for="section_name">Section Name</label>
-                    <input type="text" id="section_name" name="section_name" class="form-control" 
-                           placeholder="e.g., A, B, C" required>
-                </div>
-                
-                <div class="form-group">
-                    <label for="class_teacher_id">Class Teacher (Optional)</label>
-                    <select id="class_teacher_id" name="class_teacher_id" class="form-control">
-                        <option value="">Select Teacher</option>
+
+                <div class="form-group mb-3">
+                     <!-- Teacher Select will be enhanced by JS -->
+                    <select id="class_teacher_id" name="class_teacher_id" class="form-control-modern">
+                        <option value="">Select Class Teacher (Optional)</option>
                         <?php foreach ($allTeachers as $teacher): ?>
                             <option value="<?php echo $teacher['teacher_id']; ?>" 
                                     data-name="<?php echo htmlspecialchars($teacher['name']); ?>"
@@ -143,297 +326,232 @@ setTimeout(function() {
                             </option>
                         <?php endforeach; ?>
                     </select>
-                    <small class="text-muted">Start typing to search for a teacher</small>
                 </div>
                 
-                <button type="submit" class="btn btn-primary">
-                    <i class="fas fa-plus"></i> Add Section
+                <button type="submit" class="btn btn-success btn-modern">
+                    <i class="fas fa-plus"></i> Create Section
                 </button>
             </form>
         </div>
     </div>
 </div>
 
-<!-- Classes List -->
-<div class="card">
-    <div class="card-header">
-        <h3>All Classes & Sections</h3>
-    </div>
-    <div class="card-body">
-        <?php if (!empty($classes)): ?>
-            <div style="display: grid; gap: 1.5rem;">
-                <?php foreach ($classes as $class): ?>
-                    <?php $classDetails = $classModel->getClassDetails($class['class_id']); ?>
-                    <div data-class-id="<?php echo $class['class_id']; ?>" data-class-name="<?php echo htmlspecialchars($class['class_name']); ?>" style="border: 2px solid var(--light); border-radius: 10px; padding: 1.5rem;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                            <h4 style="margin: 0; color: var(--primary);">
-                                <?php echo htmlspecialchars($class['class_name']); ?>
-                            </h4>
-                            <div style="display: flex; gap: 0.5rem; align-items: center;">
-                                <span class="badge badge-info">
-                                    <?php echo $class['section_count']; ?> Section<?php echo $class['section_count'] != 1 ? 's' : ''; ?>
-                                </span>
-                                <a href="<?php echo BASE_URL; ?>/admin/classes/delete_class.php?id=<?php echo $class['class_id']; ?>" 
-                                   class="btn btn-danger btn-sm delete-btn"
-                                   data-delete-url="<?php echo BASE_URL; ?>/admin/classes/delete_class.php?id=<?php echo $class['class_id']; ?>"
-                                   data-delete-message="Are you sure you want to delete class '<?php echo htmlspecialchars($class['class_name']); ?>'? All sections must be deleted first.">
-                                    <i class="fas fa-trash"></i>
-                                </a>
-                            </div>
-                        </div>
-                        
-                        <?php if (!empty($classDetails['sections'])): ?>
-                            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1rem;">
-                                <?php foreach ($classDetails['sections'] as $section): ?>
-                                    <div data-section-name="<?php echo htmlspecialchars($section['section_name']); ?>" style="background: var(--light); padding: 1rem; border-radius: 8px; transition: all 0.2s ease;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.1)';" onmouseout="this.style.transform=''; this.style.boxShadow='';">
-                                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.5rem;">
-                                            <strong style="font-size: 1.1rem;">Section <?php echo htmlspecialchars($section['section_name']); ?></strong>
-                                            <div style="display: flex; gap: 0.25rem;">
-                                                <a href="<?php echo BASE_URL; ?>/admin/classes/view_section.php?id=<?php echo $section['section_id']; ?>" 
-                                                   class="btn btn-info btn-sm" title="View Details" style="padding: 0.25rem 0.5rem;">
-                                                    <i class="fas fa-eye"></i>
-                                                </a>
-                                                <a href="<?php echo BASE_URL; ?>/admin/classes/edit_section.php?id=<?php echo $section['section_id']; ?>" 
-                                                   class="btn btn-warning btn-sm" title="Edit" style="padding: 0.25rem 0.5rem;">
-                                                    <i class="fas fa-edit"></i>
-                                                </a>
-                                                <a href="<?php echo BASE_URL; ?>/admin/classes/delete_section.php?id=<?php echo $section['section_id']; ?>" 
-                                                   class="btn btn-danger btn-sm delete-btn" title="Delete" style="padding: 0.25rem 0.5rem;"
-                                                   data-delete-url="<?php echo BASE_URL; ?>/admin/classes/delete_section.php?id=<?php echo $section['section_id']; ?>"
-                                                   data-delete-message="Are you sure you want to delete Section '<?php echo htmlspecialchars($section['section_name']); ?>' from <?php echo htmlspecialchars($class['class_name']); ?>?">
-                                                    <i class="fas fa-trash"></i>
-                                                </a>
+<h4 style="margin-bottom: 1.5rem; font-weight: 700; color: #374151; padding-left: 0.5rem; border-left: 4px solid #4e73df;">
+    Active Classes & Sections
+</h4>
+
+<?php if (!empty($classes)): ?>
+    <div class="class-grid">
+        <?php foreach ($classes as $class): ?>
+            <?php $classDetails = $classModel->getClassDetails($class['class_id']); ?>
+            <div class="class-card" 
+                 data-class-id="<?php echo $class['class_id']; ?>" 
+                 data-class-name="<?php echo htmlspecialchars($class['class_name']); ?>">
+                
+                <div class="class-header">
+                    <span class="class-title"><?php echo htmlspecialchars($class['class_name']); ?></span>
+                    <a href="<?php echo BASE_URL; ?>/admin/classes/delete_class.php?id=<?php echo $class['class_id']; ?>" 
+                       class="btn btn-icon delete delete-btn"
+                       data-delete-url="<?php echo BASE_URL; ?>/admin/classes/delete_class.php?id=<?php echo $class['class_id']; ?>"
+                       data-delete-message="Delete class '<?php echo htmlspecialchars($class['class_name']); ?>'?">
+                        <i class="fas fa-trash-alt"></i>
+                    </a>
+                </div>
+                
+                <div class="class-body">
+                    <?php if (!empty($classDetails['sections'])): ?>
+                        <div class="section-list">
+                            <?php foreach ($classDetails['sections'] as $section): ?>
+                                <div class="section-item" data-section-name="<?php echo htmlspecialchars($section['section_name']); ?>">
+                                    <div class="section-info">
+                                        <div class="section-badge"><?php echo htmlspecialchars($section['section_name']); ?></div>
+                                        <div>
+                                            <div style="font-weight: 600; font-size: 0.9rem;">Section</div>
+                                            <div class="teacher-info">
+                                                <i class="fas fa-chalkboard-teacher" style="font-size: 0.8rem;"></i>
+                                                <?php echo $section['class_teacher_name'] ? htmlspecialchars($section['class_teacher_name']) : '<span style="color:#9ca3af; font-style:italic;">No Teacher</span>'; ?>
                                             </div>
                                         </div>
-                                        <p style="margin: 0; color: #666; font-size: 0.9rem;">
-                                            <i class="fas fa-user"></i> 
-                                            <?php echo $section['class_teacher_name'] ? htmlspecialchars($section['class_teacher_name']) : 'No class teacher'; ?>
-                                        </p>
                                     </div>
-                                <?php endforeach; ?>
-                            </div>
-                        <?php else: ?>
-                            <p style="color: #999; margin: 0;">No sections created yet.</p>
-                        <?php endif; ?>
-                    </div>
-                <?php endforeach; ?>
+                                    <div class="action-buttons">
+                                        <a href="<?php echo BASE_URL; ?>/admin/classes/view_section.php?id=<?php echo $section['section_id']; ?>" 
+                                           class="btn-icon" title="View Students">
+                                            <i class="fas fa-users"></i>
+                                        </a>
+                                        <a href="<?php echo BASE_URL; ?>/admin/classes/edit_section.php?id=<?php echo $section['section_id']; ?>" 
+                                           class="btn-icon" title="Edit Section">
+                                            <i class="fas fa-pen"></i>
+                                        </a>
+                                        <a href="<?php echo BASE_URL; ?>/admin/classes/delete_section.php?id=<?php echo $section['section_id']; ?>" 
+                                           class="btn-icon delete delete-btn" title="Delete"
+                                           data-delete-url="<?php echo BASE_URL; ?>/admin/classes/delete_section.php?id=<?php echo $section['section_id']; ?>"
+                                           data-delete-message="Delete section '<?php echo htmlspecialchars($section['section_name']); ?>'?">
+                                            <i class="fas fa-times"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php else: ?>
+                        <div style="text-align: center; color: #9ca3af; padding: 1.5rem 0; border: 2px dashed #f3f4f6; border-radius: 0.5rem;">
+                            <small>No sections added yet</small>
+                        </div>
+                    <?php endif; ?>
+                </div>
             </div>
-        <?php else: ?>
-            <p style="text-align: center; padding: 2rem; color: #999;">No classes found.</p>
-        <?php endif; ?>
+        <?php endforeach; ?>
     </div>
-</div>
+<?php else: ?>
+    <div style="text-align: center; padding: 4rem; background: white; border-radius: 1rem; color: #6b7280;">
+        <i class="fas fa-school fa-3x mb-3" style="color: #e5e7eb;"></i>
+        <h4>No Classes Found</h4>
+        <p>Use the form above to create your first class.</p>
+    </div>
+<?php endif; ?>
 
 <script>
-// Make teacher select searchable
+// Validations and Teacher Search Logic
 document.addEventListener('DOMContentLoaded', function() {
-    const teacherSelect = document.getElementById('class_teacher_id');
     
+    // --- Enhanced Teacher Search ---
+    const teacherSelect = document.getElementById('class_teacher_id');
     if (teacherSelect) {
-        // Store original options
         const originalOptions = Array.from(teacherSelect.options);
         
-        // Create a search input wrapper
         const wrapper = document.createElement('div');
-        wrapper.style.position = 'relative';
+        wrapper.className = 'teacher-search-wrapper';
         teacherSelect.parentNode.insertBefore(wrapper, teacherSelect);
         wrapper.appendChild(teacherSelect);
         
-        // Create search input
         const searchInput = document.createElement('input');
         searchInput.type = 'text';
-        searchInput.className = 'form-control';
-        searchInput.placeholder = 'Type to search teachers...';
+        searchInput.className = 'form-control-modern';
+        searchInput.placeholder = '🔍 Type to search teacher...';
         searchInput.style.marginBottom = '5px';
         
-        // Insert search input before select
         wrapper.insertBefore(searchInput, teacherSelect);
         
-        // Hide select initially, show on focus
         teacherSelect.style.display = 'none';
-        teacherSelect.size = 8;
+        teacherSelect.size = 5; // Show 5 items roughly
+        teacherSelect.classList.add('form-control-modern'); // Add styling
         
-        // Track if user has made a valid selection
         let validSelection = true;
         
-        // Show/hide select on search input focus
-        searchInput.addEventListener('focus', function() {
+        const showDropdown = () => {
             teacherSelect.style.display = 'block';
-            filterOptions('');
-        });
+            filterOptions(searchInput.value);
+        };
         
-        // Filter options as user types
+        const hideDropdown = () => {
+             // Delay slightly to allow click event to register
+             setTimeout(() => {
+                 teacherSelect.style.display = 'none';
+             }, 200);
+        };
+
+        searchInput.addEventListener('focus', showDropdown);
+        // searchInput.addEventListener('blur', hideDropdown); // Handled by document click
+        
         searchInput.addEventListener('input', function() {
             filterOptions(this.value);
-            // Mark as invalid selection when user types
-            if (this.value.trim() !== '') {
-                validSelection = false;
-                searchInput.style.borderColor = '#ffc107'; // Warning color
-            } else {
-                validSelection = true;
-                teacherSelect.value = ''; // Clear selection
-                searchInput.style.borderColor = '';
-            }
+            validSelection = (this.value.trim() === '');
+            this.style.borderColor = validSelection ? '' : '#f59e0b';
         });
         
-        // Update search input when option is selected
         teacherSelect.addEventListener('change', function() {
             const selectedOption = this.options[this.selectedIndex];
             if (selectedOption.value) {
-                searchInput.value = selectedOption.text;
+                searchInput.value = selectedOption.text.trim();
                 validSelection = true;
-                searchInput.style.borderColor = '#28a745'; // Success color
+                searchInput.style.borderColor = '#10b981';
             } else {
                 searchInput.value = '';
                 validSelection = true;
-                searchInput.style.borderColor = '';
             }
             teacherSelect.style.display = 'none';
         });
         
-        // Handle clicking on an option
-        teacherSelect.addEventListener('click', function() {
-            const selectedOption = this.options[this.selectedIndex];
-            if (selectedOption.value) {
-                searchInput.value = selectedOption.text;
-                validSelection = true;
-                searchInput.style.borderColor = '#28a745';
-            } else {
-                searchInput.value = '';
-                validSelection = true;
-                searchInput.style.borderColor = '';
-            }
-            teacherSelect.style.display = 'none';
-        });
-        
-        // Hide select when clicking outside
+        // Hide when clicking outside
         document.addEventListener('click', function(e) {
             if (!wrapper.contains(e.target)) {
                 teacherSelect.style.display = 'none';
             }
         });
-        
-        // Form validation
-        const form = teacherSelect.closest('form');
-        if (form) {
-            form.addEventListener('submit', function(e) {
-                // If there's text in search input but no valid selection
-                if (searchInput.value.trim() !== '' && !validSelection) {
-                    e.preventDefault();
-                    searchInput.style.borderColor = '#dc3545'; // Danger color
-                    showToast('Please select a teacher from the dropdown list, or clear the field to leave it empty.', 'warning');
-                    searchInput.focus();
-                    teacherSelect.style.display = 'block';
-                    filterOptions(searchInput.value);
-                    return false;
-                }
-                
-                // If search input is empty, make sure select is also empty
-                if (searchInput.value.trim() === '') {
-                    teacherSelect.value = '';
-                }
-            });
-        }
-        
-        function filterOptions(searchTerm) {
-            const term = searchTerm.toLowerCase();
-            
-            // Clear current options
+
+        function filterOptions(term) {
+            const t = term.toLowerCase();
             teacherSelect.innerHTML = '';
             
-            // Filter and add matching options
-            originalOptions.forEach(option => {
-                const text = option.text.toLowerCase();
-                const customId = option.getAttribute('data-custom-id') || '';
-                const name = option.getAttribute('data-name') || '';
-                
-                if (option.value === '' || 
-                    text.includes(term) || 
-                    customId.toLowerCase().includes(term) ||
-                    name.toLowerCase().includes(term)) {
-                    teacherSelect.appendChild(option.cloneNode(true));
+            // Allow empty selection
+            if(t === '') {
+                 const emptyOpt = document.createElement('option');
+                 emptyOpt.value = '';
+                 emptyOpt.text = 'Select Class Teacher (Optional)';
+                 teacherSelect.appendChild(emptyOpt);
+            }
+
+            let count = 0;
+            originalOptions.forEach(opt => {
+                if (opt.value === '') return;
+                const text = opt.text.toLowerCase();
+                if (text.includes(t)) {
+                    teacherSelect.appendChild(opt.cloneNode(true));
+                    count++;
                 }
             });
+            
+            if(count === 0 && t !== '') {
+                 const noOpt = document.createElement('option');
+                 noOpt.disabled = true;
+                 noOpt.text = 'No teachers found';
+                 teacherSelect.appendChild(noOpt);
+            }
         }
     }
+
+    // --- Duplicate Checks ---
     
-    // Validate duplicate sections
+    // Class Name Check
+    const addClassForm = document.getElementById('addClassForm');
+    if (addClassForm) {
+        addClassForm.addEventListener('submit', function(e) {
+            const name = document.getElementById('class_name').value.trim();
+            const existing = document.querySelectorAll(`[data-class-name]`);
+            let isDup = false;
+            
+            existing.forEach(el => {
+                if(el.getAttribute('data-class-name').toLowerCase() === name.toLowerCase()) isDup = true;
+            });
+            
+            if (isDup) {
+                e.preventDefault();
+                alert('⚠️ A class with this name already exists.');
+            }
+        });
+    }
+
+    // Section Name Check
     const addSectionForm = document.getElementById('addSectionForm');
     if (addSectionForm) {
         addSectionForm.addEventListener('submit', function(e) {
             const classId = document.getElementById('class_id').value;
-            const sectionName = document.getElementById('section_name').value.trim();
+            const secName = document.getElementById('section_name').value.trim();
             
-            if (!classId || !sectionName) {
-                return; // Let HTML5 validation handle this
-            }
+            if(!classId || !secName) return;
             
-            // Get all existing sections for the selected class
-            const classCards = document.querySelectorAll('[data-class-id]');
-            let isDuplicate = false;
-            
-            classCards.forEach(card => {
-                if (card.getAttribute('data-class-id') === classId) {
-                    const sections = card.querySelectorAll('[data-section-name]');
-                    sections.forEach(section => {
-                        const existingSectionName = section.getAttribute('data-section-name').trim();
-                        if (existingSectionName.toLowerCase() === sectionName.toLowerCase()) {
-                            isDuplicate = true;
-                        }
-                    });
+            const classCard = document.querySelector(`.class-card[data-class-id="${classId}"]`);
+            if(classCard) {
+                const existingSec = classCard.querySelectorAll(`[data-section-name]`);
+                let isDup = false;
+                existingSec.forEach(el => {
+                    if(el.getAttribute('data-section-name').toLowerCase() === secName.toLowerCase()) isDup = true;
+                });
+                
+                if(isDup) {
+                    e.preventDefault();
+                    alert('⚠️ This section already exists in the selected class.');
                 }
-            });
-            
-            if (isDuplicate) {
-                e.preventDefault();
-                const sectionInput = document.getElementById('section_name');
-                sectionInput.style.borderColor = '#dc3545';
-                showToast('A section with this name already exists in the selected class. Please use a different name.', 'warning');
-                sectionInput.focus();
-                return false;
             }
-        });
-        
-        // Reset border color when user types
-        document.getElementById('section_name').addEventListener('input', function() {
-            this.style.borderColor = '';
-        });
-    }
-    
-    // Validate duplicate class names
-    const addClassForm = document.getElementById('addClassForm');
-    if (addClassForm) {
-        addClassForm.addEventListener('submit', function(e) {
-            const className = document.getElementById('class_name').value.trim();
-            
-            if (!className) {
-                return; // Let HTML5 validation handle this
-            }
-            
-            // Get all existing class names
-            const classCards = document.querySelectorAll('[data-class-name]');
-            let isDuplicate = false;
-            
-            classCards.forEach(card => {
-                const existingClassName = card.getAttribute('data-class-name').trim();
-                if (existingClassName.toLowerCase() === className.toLowerCase()) {
-                    isDuplicate = true;
-                }
-            });
-            
-            if (isDuplicate) {
-                e.preventDefault();
-                const classInput = document.getElementById('class_name');
-                classInput.style.borderColor = '#dc3545';
-                showToast('A class with this name already exists. Please use a different name.', 'warning');
-                classInput.focus();
-                return false;
-            }
-        });
-        
-        // Reset border color when user types
-        document.getElementById('class_name').addEventListener('input', function() {
-            this.style.borderColor = '';
         });
     }
 });
