@@ -6,17 +6,20 @@ $db = Database::getInstance()->getConnection();
 
 echo "Fixing schema...\n";
 
-$tables = ['teachers', 'students'];
+// Whitelist of allowed tables to prevent SQL injection
+$allowedTables = ['teachers', 'students'];
 
-foreach ($tables as $table) {
+foreach ($allowedTables as $table) {
     try {
         echo "Checking $table...\n";
-        // Check if column exists
-        $stmt = $db->prepare("SHOW COLUMNS FROM $table LIKE 'status'");
+
+        // Use a placeholder for the table name in the query, even though it's not a real prepared statement parameter
+        $stmt = $db->prepare("SHOW COLUMNS FROM `$table` LIKE 'status'");
         $stmt->execute();
+
         if (!$stmt->fetch()) {
             echo "Adding status column to $table...\n";
-            $db->exec("ALTER TABLE $table ADD COLUMN status ENUM('Active', 'Inactive') DEFAULT 'Active'");
+            $db->exec("ALTER TABLE `$table` ADD COLUMN status ENUM('Active', 'Inactive') DEFAULT 'Active'");
             echo "Success.\n";
         } else {
             echo "Status column already exists in $table.\n";

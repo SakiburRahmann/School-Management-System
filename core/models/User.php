@@ -86,6 +86,13 @@ class User extends BaseModel {
     public function usernameExists($username, $excludeId = null) {
         return $this->exists('username', $username, $excludeId);
     }
+
+    /**
+     * Find user by username
+     */
+    public function findByUsername($username) {
+        return $this->queryOne("SELECT * FROM {$this->table} WHERE username = :username", ['username' => $username]);
+    }
     
     /**
      * Deactivate user

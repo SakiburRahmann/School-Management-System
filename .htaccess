@@ -1,0 +1,17 @@
+# Disable directory browsing
+Options -Indexes
+
+# Hide server signature
+ServerSignature Off
+
+# Set security headers
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-Frame-Options "SAMEORIGIN"
+    Header set X-XSS-Protection "1; mode=block"
+</IfModule>
+
+# Deny access to sensitive files
+<FilesMatch "^(\.env|\.git|README\.md|config\.php|database\.sql)$">
+    Require all denied
+</FilesMatch>
