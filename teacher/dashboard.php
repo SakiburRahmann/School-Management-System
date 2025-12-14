@@ -108,7 +108,7 @@ $todayOverview = $attendanceModel->getTodayOverview();
                         <div style="padding: 0.75rem; background: var(--light); border-radius: 8px;">
                             <strong><?php echo htmlspecialchars($section['class_name']); ?> - Section <?php echo htmlspecialchars($section['section_name']); ?></strong>
                             <br>
-                            <a href="<?php echo BASE_URL; ?>/teacher/attendance.php?class=<?php echo $section['class_id']; ?>&section=<?php echo $section['section_id']; ?>" 
+                            <a href="<?php echo BASE_URL; ?>/teacher/attendance/take.php?class=<?php echo $section['class_id']; ?>&section=<?php echo $section['section_id']; ?>" 
                                class="btn btn-sm btn-primary" style="margin-top: 0.5rem;">
                                <i class="fas fa-calendar-check"></i> Take Attendance
                             </a>
@@ -165,7 +165,7 @@ $todayOverview = $attendanceModel->getTodayOverview();
     </div>
     <div class="card-body">
         <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
-            <a href="<?php echo BASE_URL; ?>/teacher/attendance.php" class="btn btn-primary">
+            <a href="<?php echo BASE_URL; ?>/teacher/attendance/" class="btn btn-primary">
                 <i class="fas fa-calendar-check"></i> Take Attendance
             </a>
             <a href="<?php echo BASE_URL; ?>/teacher/exams/" class="btn btn-success">

@@ -1,16 +1,24 @@
 <?php
 /**
- * Teacher - Take Attendance
+ * Teacher - Take Attendance (Modern UI)
  */
 
-$pageTitle = 'Take Attendance';
-require_once __DIR__ . '/../../includes/teacher_header.php';
+// 1. Initialize System & Auth Checks (BEFORE Output)
+require_once __DIR__ . '/../../config.php';
 
+// Ensure user is logged in as Teacher
+requireRole('Teacher');
+
+$currentUser = (new User())->getUserWithRelated(getUserId());
+$teacherInfo = $currentUser['related_info'] ?? null;
 $teacherId = $teacherInfo['teacher_id'];
+
+// 2. Initialize Models
 $attendanceModel = new Attendance();
 $teacherModel = new Teacher();
 $studentModel = new Student();
 
+// 3. Request Parameter Handling
 $selectedDate = $_GET['date'] ?? date('Y-m-d');
 $classId = $_GET['class'] ?? '';
 $sectionId = $_GET['section'] ?? '';
@@ -20,8 +28,9 @@ if (!$classId || !$sectionId) {
     redirect(BASE_URL . '/teacher/attendance/');
 }
 
-// Validate assignment
-$assignedClasses = $teacherModel->getAssignedClasses($teacherId);
+// 4. Access Control Logic
+// Validate assignment (Using ClassTeacher logic for consistency)
+$assignedClasses = $teacherModel->getClassTeacherSections($teacherId);
 $isAssigned = false;
 $className = '';
 $sectionName = '';
@@ -40,19 +49,7 @@ if (!$isAssigned) {
     redirect(BASE_URL . '/teacher/attendance/');
 }
 
-// Get students and attendance data
-$students = $studentModel->getByClass($classId, $sectionId);
-$attendanceData = $attendanceModel->getByDate($selectedDate, $classId, $sectionId);
-
-// Create lookup array
-$attendanceLookup = [];
-$remarksLookup = [];
-foreach ($attendanceData as $record) {
-    $attendanceLookup[$record['student_id']] = $record['status'];
-    $remarksLookup[$record['student_id']] = $record['remarks'];
-}
-
-// Handle attendance submission
+// 5. POST Request Handling (Saving Data)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'mark_attendance') {
     if (verifyCSRFToken($_POST['csrf_token'])) {
         $date = $_POST['date'];
@@ -73,7 +70,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         
         if (!empty($dataToSave)) {
             $result = $attendanceModel->bulkMark($dataToSave);
-            setFlash('success', "Attendance saved! Updated: {$result['success']}, Errors: {$result['errors']}");
+            setFlash('success', "Attendance saved successfully!");
         } else {
             setFlash('warning', 'No attendance data to save.');
         }
@@ -81,176 +78,325 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         redirect(BASE_URL . '/teacher/attendance/take.php?date=' . $date . '&class=' . $classId . '&section=' . $sectionId);
     }
 }
+
+// 6. Data Fetching for View
+// Get students and attendance data
+$students = $studentModel->getByClass($classId, $sectionId);
+$attendanceData = $attendanceModel->getByDate($selectedDate, $classId, $sectionId);
+
+// Create lookup array
+$attendanceLookup = [];
+$remarksLookup = [];
+$totalPresent = 0;
+$totalAbsent = 0;
+$totalLate = 0;
+
+foreach ($attendanceData as $record) {
+    $attendanceLookup[$record['student_id']] = $record['status'];
+    $remarksLookup[$record['student_id']] = $record['remarks'];
+    
+    if($record['status'] == 'Present') $totalPresent++;
+    if($record['status'] == 'Absent') $totalAbsent++;
+    if($record['status'] == 'Late') $totalLate++;
+}
+
+// 7. Output HTML View
+$pageTitle = 'Take Attendance';
+require_once __DIR__ . '/../../includes/teacher_header.php';
 ?>
 
-<div class="card">
-    <div class="card-header">
-        <div class="d-flex justify-content-between align-items-center">
-            <div>
-                <h3><i class="fas fa-calendar-check"></i> Take Attendance</h3>
-                <p class="mb-0 text-muted">
-                    <?php echo htmlspecialchars($className); ?> - <?php echo htmlspecialchars($sectionName); ?>
-                </p>
+<style>
+    /* Header & Controls */
+    .top-controls {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 16px;
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+        margin-bottom: 2rem;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1.5rem;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .page-title h2 { font-weight: 800; color: #2d3748; margin: 0; }
+    .page-title p { color: #718096; margin: 0.25rem 0 0 0; }
+    
+    .date-control {
+        display: flex;
+        align-items: center;
+        background: #f7fafc;
+        padding: 0.5rem 1rem;
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+    }
+    
+    .date-control input {
+        border: none;
+        background: transparent;
+        font-weight: 600;
+        color: #4a5568;
+        margin-left: 0.5rem;
+    }
+    
+    .date-control input:focus { outline: none; }
+
+    /* Student List */
+    .student-list {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+        overflow: hidden;
+    }
+    
+    .list-header {
+        display: grid;
+        grid-template-columns: 80px 1fr 2fr 3fr;
+        padding: 1rem 1.5rem;
+        background: #f8fafc;
+        border-bottom: 1px solid #edf2f7;
+        font-weight: 600;
+        color: #718096;
+        text-transform: uppercase;
+        font-size: 0.8rem;
+        letter-spacing: 0.05em;
+    }
+    
+    .student-row {
+        display: grid;
+        grid-template-columns: 80px 1fr 2fr 3fr;
+        padding: 1.25rem 1.5rem;
+        border-bottom: 1px solid #f7fafc;
+        align-items: center;
+        transition: background 0.15s;
+    }
+    
+    .student-row:last-child { border-bottom: none; }
+    
+    .student-row:hover { background: #fdfdfd; }
+    
+    .roll { font-weight: 700; color: #a0aec0; }
+    
+    .student-info { display: flex; align-items: center; gap: 1rem; }
+    
+    .avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 1rem;
+        color: white;
+        flex-shrink: 0;
+    }
+    
+    .name { font-weight: 700; color: #2d3748; }
+    
+    /* Interactive Pills */
+    .status-selector {
+        display: flex;
+        background: #edf2f7;
+        padding: 4px;
+        border-radius: 30px;
+        width: fit-content;
+    }
+    
+    .status-option {
+        padding: 0.5rem 1.5rem;
+        border-radius: 25px;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 0.9rem;
+        color: #718096;
+        transition: all 0.2s;
+        user-select: none;
+    }
+    
+    .status-option:hover { color: #4a5568; }
+    
+    /* Active States */
+    input[type="radio"]:checked + .status-option[data-value="Present"] {
+        background: white;
+        color: #48bb78;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    
+    input[type="radio"]:checked + .status-option[data-value="Absent"] {
+        background: white;
+        color: #f56565;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    
+    input[type="radio"]:checked + .status-option[data-value="Late"] {
+        background: white;
+        color: #ecc94b;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    
+    /* Hidden Radios */
+    .start-radio { display: none; }
+    
+    .remarks-input {
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 0.5rem 1rem;
+        width: 100%;
+        font-size: 0.9rem;
+        transition: border-color 0.2s;
+    }
+    
+    .remarks-input:focus {
+        border-color: #667eea;
+        outline: none;
+    }
+    
+    .floating-save {
+        position: fixed;
+        bottom: 2rem;
+        right: 2rem;
+        z-index: 100;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    }
+    
+    @media (max-width: 768px) {
+        .list-header { display: none; }
+        .student-row {
+            grid-template-columns: 1fr;
+            gap: 1rem;
+            text-align: center;
+        }
+        .student-info { justify-content: center; flex-direction: column; }
+        .status-selector { margin: 0 auto; width: 100%; justify-content: space-between; }
+        .status-option { padding: 0.75rem 0; flex-grow: 1; text-align: center; }
+    }
+</style>
+
+<form method="POST" id="attendanceForm">
+    <div class="top-controls">
+        <div class="page-title">
+            <h2>Take Attendance</h2>
+            <p><?php echo htmlspecialchars($className); ?> - Section <?php echo htmlspecialchars($sectionName); ?></p>
+        </div>
+        
+        <div class="d-flex align-items-center gap-3">
+            <div class="date-control">
+                <i class="fas fa-calendar text-muted"></i>
+                <input type="date" value="<?php echo $selectedDate; ?>" onchange="window.location.href='?class=<?php echo $classId; ?>&section=<?php echo $sectionId; ?>&date='+this.value">
             </div>
-            <a href="<?php echo BASE_URL; ?>/teacher/attendance/" class="btn btn-secondary">
-                <i class="fas fa-arrow-left"></i> Back
-            </a>
+            
+            <button type="submit" class="btn btn-primary d-none d-md-block">
+                <i class="fas fa-save mr-2"></i> Save Changes
+            </button>
         </div>
     </div>
-    <div class="card-body">
-        <!-- Date Filter -->
-        <form method="GET" style="margin-bottom: 1.5rem; background: #f8f9fa; padding: 1rem; border-radius: 8px;">
-            <input type="hidden" name="class" value="<?php echo $classId; ?>">
-            <input type="hidden" name="section" value="<?php echo $sectionId; ?>">
-            
-            <div class="form-row align-items-end">
-                <div class="col-md-4">
-                    <label for="date">Date</label>
-                    <input type="date" id="date" name="date" class="form-control" 
-                           value="<?php echo $selectedDate; ?>" onchange="this.form.submit()">
-                </div>
-                <div class="col-md-8 text-right">
-                    <span class="text-muted">
-                        <i class="fas fa-info-circle"></i> 
-                        <?php echo empty($attendanceData) ? 'No attendance marked for this date.' : 'Attendance already marked. You can update it.'; ?>
-                    </span>
-                </div>
-            </div>
-        </form>
-        
-        <!-- Attendance Form -->
-        <?php if (!empty($students)): ?>
-            <form method="POST" action="">
-                <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
-                <input type="hidden" name="action" value="mark_attendance">
-                <input type="hidden" name="date" value="<?php echo $selectedDate; ?>">
-                
-                <div style="margin-bottom: 1rem; display: flex; gap: 0.5rem; justify-content: flex-end;">
-                    <button type="button" class="btn btn-success btn-sm" onclick="markAll('Present')">
-                        <i class="fas fa-check"></i> Mark All Present
-                    </button>
-                    <button type="button" class="btn btn-danger btn-sm" onclick="markAll('Absent')">
-                        <i class="fas fa-times"></i> Mark All Absent
-                    </button>
-                </div>
-
-                <div class="table-responsive">
-                    <table class="table table-bordered table-hover">
-                        <thead>
-                            <tr>
-                                <th width="50">#</th>
-                                <th>Roll No</th>
-                                <th>Student Name</th>
-                                <th class="text-center" width="100">Present</th>
-                                <th class="text-center" width="100">Absent</th>
-                                <th class="text-center" width="100">Late</th>
-                                <th class="text-center" width="100">Excused</th>
-                                <th>Remarks</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php foreach ($students as $index => $student): ?>
-                                <?php 
-                                $currentStatus = $attendanceLookup[$student['student_id']] ?? 'Present'; // Default to Present
-                                $currentRemarks = $remarksLookup[$student['student_id']] ?? '';
-                                ?>
-                                <tr>
-                                    <td><?php echo $index + 1; ?></td>
-                                    <td><?php echo htmlspecialchars($student['roll_number'] ?? '-'); ?></td>
-                                    <td>
-                                        <strong><?php echo htmlspecialchars($student['name']); ?></strong>
-                                    </td>
-                                    <td class="text-center">
-                                        <div class="custom-control custom-radio">
-                                            <input type="radio" id="p_<?php echo $student['student_id']; ?>" 
-                                                   name="attendance[<?php echo $student['student_id']; ?>]" 
-                                                   value="Present" class="custom-control-input status-present"
-                                                   <?php echo $currentStatus === 'Present' ? 'checked' : ''; ?>>
-                                            <label class="custom-control-label" for="p_<?php echo $student['student_id']; ?>"></label>
-                                        </div>
-                                    </td>
-                                    <td class="text-center">
-                                        <div class="custom-control custom-radio">
-                                            <input type="radio" id="a_<?php echo $student['student_id']; ?>" 
-                                                   name="attendance[<?php echo $student['student_id']; ?>]" 
-                                                   value="Absent" class="custom-control-input status-absent"
-                                                   <?php echo $currentStatus === 'Absent' ? 'checked' : ''; ?>>
-                                            <label class="custom-control-label" for="a_<?php echo $student['student_id']; ?>"></label>
-                                        </div>
-                                    </td>
-                                    <td class="text-center">
-                                        <div class="custom-control custom-radio">
-                                            <input type="radio" id="l_<?php echo $student['student_id']; ?>" 
-                                                   name="attendance[<?php echo $student['student_id']; ?>]" 
-                                                   value="Late" class="custom-control-input status-late"
-                                                   <?php echo $currentStatus === 'Late' ? 'checked' : ''; ?>>
-                                            <label class="custom-control-label" for="l_<?php echo $student['student_id']; ?>"></label>
-                                        </div>
-                                    </td>
-                                    <td class="text-center">
-                                        <div class="custom-control custom-radio">
-                                            <input type="radio" id="e_<?php echo $student['student_id']; ?>" 
-                                                   name="attendance[<?php echo $student['student_id']; ?>]" 
-                                                   value="Excused" class="custom-control-input status-excused"
-                                                   <?php echo $currentStatus === 'Excused' ? 'checked' : ''; ?>>
-                                            <label class="custom-control-label" for="e_<?php echo $student['student_id']; ?>"></label>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <input type="text" name="remarks[<?php echo $student['student_id']; ?>]" 
-                                               class="form-control form-control-sm" 
-                                               placeholder="Optional note"
-                                               value="<?php echo htmlspecialchars($currentRemarks); ?>">
-                                    </td>
-                                </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
-                </div>
-                
-                <div style="margin-top: 1.5rem; text-align: right;">
-                    <button type="submit" class="btn btn-primary btn-lg">
-                        <i class="fas fa-save"></i> Save Attendance
-                    </button>
-                </div>
-            </form>
-        <?php else: ?>
-            <div class="alert alert-info">
-                <i class="fas fa-info-circle"></i> No students found in this section.
-            </div>
-        <?php endif; ?>
+    
+    <div class="d-flex justify-content-between mb-3 px-2">
+        <div>
+            <span class="badge badge-success mr-2">Present: <span id="countPresent"><?php echo $totalPresent; ?></span></span>
+            <span class="badge badge-danger mr-2">Absent: <span id="countAbsent"><?php echo $totalAbsent; ?></span></span>
+            <span class="badge badge-warning">Late: <span id="countLate"><?php echo $totalLate; ?></span></span>
+        </div>
+        <div>
+            <button type="button" class="btn btn-sm btn-outline-success" onclick="markAll('Present')">All Present</button>
+            <button type="button" class="btn btn-sm btn-outline-danger" onclick="markAll('Absent')">All Absent</button>
+        </div>
     </div>
-</div>
+
+    <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
+    <input type="hidden" name="action" value="mark_attendance">
+    <input type="hidden" name="date" value="<?php echo $selectedDate; ?>">
+
+    <?php if (empty($students)): ?>
+        <div class="alert alert-info py-5 text-center">
+            <i class="fas fa-users-slash fa-3x mb-3 text-muted"></i>
+            <p>No students found in this section.</p>
+        </div>
+    <?php else: ?>
+        <div class="student-list">
+            <div class="list-header">
+                <div>Roll No</div>
+                <div>Name</div>
+                <div class="text-center">Status</div>
+                <div>Remarks</div>
+            </div>
+            
+            <?php foreach ($students as $student): ?>
+                <?php 
+                    $status = $attendanceLookup[$student['student_id']] ?? 'Present';
+                    $remarks = $remarksLookup[$student['student_id']] ?? '';
+                    
+                    // Avatar Color
+                    $hue = crc32($student['name']) % 360;
+                    $bg = "hsl($hue, 70%, 60%)";
+                ?>
+                <div class="student-row">
+                    <div class="roll"><?php echo $student['roll_number']; ?></div>
+                    <div class="student-info">
+                        <div class="avatar" style="background: <?php echo $bg; ?>">
+                            <?php echo strtoupper(substr($student['name'], 0, 1)); ?>
+                        </div>
+                        <div class="name"><?php echo htmlspecialchars($student['name']); ?></div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-center">
+                        <div class="status-selector">
+                            <label>
+                                <input type="radio" name="attendance[<?php echo $student['student_id']; ?>]" value="Present" class="start-radio" 
+                                       <?php echo $status === 'Present' ? 'checked' : ''; ?> onchange="updateCounts()">
+                                <div class="status-option" data-value="Present">Present</div>
+                            </label>
+                            
+                            <label>
+                                <input type="radio" name="attendance[<?php echo $student['student_id']; ?>]" value="Absent" class="start-radio" 
+                                       <?php echo $status === 'Absent' ? 'checked' : ''; ?> onchange="updateCounts()">
+                                <div class="status-option" data-value="Absent">Absent</div>
+                            </label>
+                            
+                            <label>
+                                <input type="radio" name="attendance[<?php echo $student['student_id']; ?>]" value="Late" class="start-radio" 
+                                       <?php echo $status === 'Late' ? 'checked' : ''; ?> onchange="updateCounts()">
+                                <div class="status-option" data-value="Late">Late</div>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <input type="text" name="remarks[<?php echo $student['student_id']; ?>]" 
+                               class="remarks-input" placeholder="Optional note..." value="<?php echo htmlspecialchars($remarks); ?>">
+                    </div>
+                </div>
+            <?php endforeach; ?>
+        </div>
+        
+        <!-- Mobile Floating Save -->
+        <button type="submit" class="btn btn-primary btn-lg rounded-pill floating-save d-md-none">
+            <i class="fas fa-check"></i> Save
+        </button>
+    <?php endif; ?>
+</form>
 
 <script>
 function markAll(status) {
     const radios = document.querySelectorAll(`input[value="${status}"]`);
-    radios.forEach(radio => radio.checked = true);
+    radios.forEach(r => r.click()); // Trigger click to fire change event and update counts
+}
+
+function updateCounts() {
+    let present = 0, absent = 0, late = 0;
+    
+    document.querySelectorAll('input.start-radio:checked').forEach(r => {
+        if(r.value === 'Present') present++;
+        if(r.value === 'Absent') absent++;
+        if(r.value === 'Late') late++;
+    });
+    
+    document.getElementById('countPresent').innerText = present;
+    document.getElementById('countAbsent').innerText = absent;
+    document.getElementById('countLate').innerText = late;
 }
 </script>
 
-<style>
-/* Custom radio styling for better visibility */
-.custom-control-input:checked ~ .custom-control-label::before {
-    border-color: var(--primary);
-    background-color: var(--primary);
-}
-.status-present:checked ~ .custom-control-label::before {
-    border-color: #10b981;
-    background-color: #10b981;
-}
-.status-absent:checked ~ .custom-control-label::before {
-    border-color: #ef4444;
-    background-color: #ef4444;
-}
-.status-late:checked ~ .custom-control-label::before {
-    border-color: #f59e0b;
-    background-color: #f59e0b;
-}
-.status-excused:checked ~ .custom-control-label::before {
-    border-color: #3b82f6;
-    background-color: #3b82f6;
-}
-</style>
-
-<?php require_once __DIR__ . '/../../includes/admin_footer.php'; ?>
+<?php require_once __DIR__ . '/../../includes/teacher_footer.php'; ?>
