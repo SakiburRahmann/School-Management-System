@@ -164,7 +164,7 @@ $todayOverview = $attendanceModel->getTodayOverview();
             <a href="<?php echo BASE_URL; ?>/teacher/attendance.php" class="btn btn-primary">
                 <i class="fas fa-calendar-check"></i> Take Attendance
             </a>
-            <a href="<?php echo BASE_URL; ?>/teacher/results.php" class="btn btn-success">
+            <a href="<?php echo BASE_URL; ?>/teacher/exams/" class="btn btn-success">
                 <i class="fas fa-edit"></i> Enter Marks
             </a>
             <a href="<?php echo BASE_URL; ?>/teacher/subjects.php" class="btn btn-info">

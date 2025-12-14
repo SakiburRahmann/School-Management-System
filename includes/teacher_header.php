@@ -49,9 +49,10 @@ $teacherInfo = $currentUser['related_info'] ?? null;
                     <i class="fas fa-book"></i> My Subjects
                 </a>
                 
-                <a href="<?php echo BASE_URL; ?>/teacher/results.php" class="menu-item">
-                    <i class="fas fa-chart-line"></i> Enter Marks
+                <a href="<?php echo BASE_URL; ?>/teacher/exams/" class="menu-item <?php echo (strpos($_SERVER['PHP_SELF'], '/teacher/exams/') !== false) ? 'active' : ''; ?>">
+                    <i class="fas fa-clipboard-list"></i> My Exams
                 </a>
+
                 
                 <a href="<?php echo BASE_URL; ?>/teacher/notices.php" class="menu-item">
                     <i class="fas fa-bullhorn"></i> Notices
