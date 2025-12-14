@@ -41,6 +41,10 @@ $teacherInfo = $currentUser['related_info'] ?? null;
                     <i class="fas fa-home"></i> Dashboard
                 </a>
                 
+                <a href="<?php echo BASE_URL; ?>/teacher/classes/view.php" class="menu-item <?php echo (strpos($_SERVER['PHP_SELF'], '/teacher/classes/') !== false) ? 'active' : ''; ?>">
+                    <i class="fas fa-chalkboard-teacher"></i> My Class
+                </a>
+                
                 <a href="<?php echo BASE_URL; ?>/teacher/attendance.php" class="menu-item">
                     <i class="fas fa-calendar-check"></i> Attendance
                 </a>

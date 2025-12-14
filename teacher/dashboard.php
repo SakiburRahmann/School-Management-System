@@ -110,7 +110,11 @@ $todayOverview = $attendanceModel->getTodayOverview();
                             <br>
                             <a href="<?php echo BASE_URL; ?>/teacher/attendance.php?class=<?php echo $section['class_id']; ?>&section=<?php echo $section['section_id']; ?>" 
                                class="btn btn-sm btn-primary" style="margin-top: 0.5rem;">
-                                <i class="fas fa-calendar-check"></i> Take Attendance
+                               <i class="fas fa-calendar-check"></i> Take Attendance
+                            </a>
+                            <a href="<?php echo BASE_URL; ?>/teacher/classes/view.php?section_id=<?php echo $section['section_id']; ?>" 
+                               class="btn btn-sm btn-info" style="margin-top: 0.5rem; margin-left: 0.5rem;">
+                                <i class="fas fa-users"></i> View Students
                             </a>
                         </div>
                     <?php endforeach; ?>
