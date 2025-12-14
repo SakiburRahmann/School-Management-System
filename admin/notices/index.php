@@ -3,12 +3,13 @@
  * Admin - Notice Management
  */
 
-$pageTitle = 'Manage Notices';
-require_once __DIR__ . '/../../includes/admin_header.php';
+// 1. Core Includes & Auth (No Output yet)
+require_once __DIR__ . '/../../config.php';
+requireRole('Admin');
 
 $noticeModel = new Notice();
 
-// Handle notice creation
+// 2. Handle Action (Create)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'add_notice') {
     if (verifyCSRFToken($_POST['csrf_token'])) {
         $data = [
@@ -31,7 +32,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     redirect(BASE_URL . '/admin/notices/');
 }
 
-// Handle notice deletion
+// 3. Handle Action (Delete)
 if (isset($_GET['delete']) && isset($_GET['id'])) {
     $noticeId = $_GET['id'];
     if ($noticeModel->delete($noticeId)) {
@@ -42,8 +43,12 @@ if (isset($_GET['delete']) && isset($_GET['id'])) {
     redirect(BASE_URL . '/admin/notices/');
 }
 
-// Get all notices
+// 4. Data Fetching
 $notices = $noticeModel->getNoticesWithDetails();
+
+// 5. Output View
+$pageTitle = 'Manage Notices';
+require_once __DIR__ . '/../../includes/admin_header.php';
 ?>
 
 <div class="card" style="margin-bottom: 1.5rem;">

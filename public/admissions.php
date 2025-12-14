@@ -14,11 +14,14 @@ $classes = $classModel->findAll('class_name');
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (verifyCSRFToken($_POST['csrf_token'])) {
+        // Get class name for the selected class_id
+        $classInfo = $classModel->find($_POST['class_id']);
+        
         $data = [
             'student_name' => sanitize($_POST['student_name']),
             'date_of_birth' => $_POST['date_of_birth'],
             'gender' => $_POST['gender'],
-            'class_id' => $_POST['class_id'],
+            'class_applying_for' => $classInfo['class_name'] ?? 'N/A', // Correct column name from schema
             'guardian_name' => sanitize($_POST['guardian_name']),
             'guardian_phone' => sanitize($_POST['guardian_phone']),
             'guardian_email' => sanitize($_POST['guardian_email']),
