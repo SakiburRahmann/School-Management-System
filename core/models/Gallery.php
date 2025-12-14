@@ -72,4 +72,59 @@ class Gallery extends BaseModel {
     public function getAll() {
         return $this->getGalleryImages();
     }
+    
+    /**
+     * Get statistics for dashboard
+     */
+    public function getStatistics() {
+        $sql = "SELECT 
+                    COUNT(*) as total,
+                    COUNT(DISTINCT category) as categories,
+                    SUM(CASE WHEN DATE(created_at) = CURDATE() THEN 1 ELSE 0 END) as today,
+                    SUM(CASE WHEN DATE(created_at) >= DATE_SUB(CURDATE(), INTERVAL 7 DAY) THEN 1 ELSE 0 END) as this_week
+                FROM {$this->table}";
+        
+        $result = $this->query($sql);
+        return $result[0] ?? ['total' => 0, 'categories' => 0, 'today' => 0, 'this_week' => 0];
+    }
+    
+    /**
+     * Search gallery images
+     */
+    public function search($query, $category = null) {
+        $sql = "SELECT g.*, u.username as uploaded_by_name
+                FROM {$this->table} g
+                LEFT JOIN users u ON g.uploaded_by = u.user_id
+                WHERE 1=1";
+        $params = [];
+        
+        if (!empty($query)) {
+            $sql .= " AND (g.title LIKE :query1 OR g.description LIKE :query2)";
+            $params['query1'] = "%{$query}%";
+            $params['query2'] = "%{$query}%";
+        }
+        
+        if ($category) {
+            $sql .= " AND g.category = :category";
+            $params['category'] = $category;
+        }
+        
+        $sql .= " ORDER BY g.created_at DESC";
+        
+        return $this->query($sql, $params);
+    }
+    
+    /**
+     * Delete image with file
+     */
+    public function deleteWithFile($id) {
+        $image = $this->find($id);
+        if ($image && !empty($image['image_path'])) {
+            $filePath = __DIR__ . '/../../' . $image['image_path'];
+            if (file_exists($filePath)) {
+                unlink($filePath);
+            }
+        }
+        return $this->delete($id);
+    }
 }

@@ -72,4 +72,67 @@ class WebsiteContent extends BaseModel {
         $sql = "SELECT DISTINCT page_name FROM {$this->table} ORDER BY page_name";
         return $this->query($sql);
     }
+    
+    /**
+     * Get pages with content counts
+     */
+    public function getAllPagesWithCounts() {
+        $sql = "SELECT page_name, COUNT(*) as content_count, MAX(updated_at) as last_updated
+                FROM {$this->table}
+                GROUP BY page_name
+                ORDER BY page_name";
+        return $this->query($sql);
+    }
+    
+    /**
+     * Get sections by page (grouped)
+     */
+    public function getSectionsByPage($pageName) {
+        $sql = "SELECT * FROM {$this->table} 
+                WHERE page_name = :page_name 
+                ORDER BY section_name, content_key";
+        
+        $contents = $this->query($sql, ['page_name' => $pageName]);
+        
+        // Group by section
+        $sections = [];
+        foreach ($contents as $content) {
+            $section = $content['section_name'] ?? 'general';
+            if (!isset($sections[$section])) {
+                $sections[$section] = [];
+            }
+            $sections[$section][] = $content;
+        }
+        
+        return $sections;
+    }
+    
+    /**
+     * Delete entire section
+     */
+    public function deleteSection($pageName, $sectionName) {
+        $sql = "DELETE FROM {$this->table} 
+                WHERE page_name = :page_name AND section_name = :section_name";
+        
+        $stmt = $this->db->prepare($sql);
+        return $stmt->execute([
+            'page_name' => $pageName,
+            'section_name' => $sectionName
+        ]);
+    }
+    
+    /**
+     * Get all content for a page as key-value pairs
+     */
+    public function getPageContentArray($pageName) {
+        $contents = $this->getPageContent($pageName);
+        $result = [];
+        
+        foreach ($contents as $content) {
+            $key = $content['section_name'] . '.' . $content['content_key'];
+            $result[$key] = $content['content_value'];
+        }
+        
+        return $result;
+    }
 }
